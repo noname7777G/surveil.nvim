@@ -23,7 +23,7 @@ Uses card data provided by Scryfall's bulk data API.
 - plenary.nvim
 - curl
 
-Set functionality grabbed from [here]{https://github.com/EvandroLG/set-lua}
+Set functionality grabbed from https://github.com/EvandroLG/set-lua
 
 # Use
 ## keybinds
