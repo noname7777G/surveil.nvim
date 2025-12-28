@@ -1,6 +1,5 @@
 local popup = require'plenary.popup'
 
-
 ---@class searchMenu
 ---@field private resultsWindow number?
 ---@field private resultWinBufnr number?

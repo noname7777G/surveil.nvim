@@ -116,7 +116,7 @@ local compareColors = function (self, oracleObject)
   local field = self.field
   local value = self.value
 
-  local oracleObjectColors = set(oracleObject[field])
+  local oracleObjectColors = oracleObject[field]
 
   local result
 
@@ -129,7 +129,7 @@ local compareColors = function (self, oracleObject)
   elseif operation == ":" then
     if field == "colors" then
       if value.size == 0 then
-        result = value.size == oracleObjectColors.size
+        result = (oracleObjectColors == nil) or value.size == oracleObjectColors.size
       else
         result = value.is_superset(oracleObjectColors)
       end

@@ -18,20 +18,9 @@ Currently supports the following Scryfall-based syntax:
 - defense
 - s/set/e/edition
 
-The following fields are not planned for implementation:
-- function
-    - relies on the tagger project, which does not release their data in bulk publicly
-- all art fields
-    - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
-    - this would also require changing the bulk-data source used to one of scryfall's larger files and neovim already chugs with just over 35k card objects loaded
-- is field
-    - like the function field this relies on data that is not public.
-    - some of these may be implemented as "preset" queries, eg `is:commander` just translates to `t:legend f:commander (t:creature or t:vehicle or t:spaceship)`
-- cn/number
-- b/block
-- in
-- all cube fields
-- all price fields
+## Depends on:
+- plenary.nvim
+- curl
 
 # TODO:
 - manacost field
@@ -48,4 +37,18 @@ The following fields are not planned for implementation:
 - make o/oracle not search reminder text
 - fo/fulloracle field
 - r/rarity field
-- Use set-lua for color and identity comparison
+
+The following fields are not planned for implementation:
+- function
+    - relies on the tagger project, which does not release their data in bulk publicly
+- all art fields
+    - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
+    - this would also require changing the bulk-data source used to one of scryfall's larger files and neovim already chugs with just over 35k card objects loaded
+- is
+    - like the function field this relies on data that is not public.
+    - some of these may be implemented as "preset" queries, eg `is:commander` just translates to `t:legend f:commander (t:creature or t:vehicle or t:spaceship)`
+- cn/number
+- b/block
+- in
+- all cube fields
+- all price fields

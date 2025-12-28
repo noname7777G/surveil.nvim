@@ -10,6 +10,7 @@ local curlArgs = " --header User-Agent:nvim-surveil --header Accept:*/* --silent
 local utils = require'utils'
 local querySession = require'query'
 local picker = require'picker'
+local Set = require'Set'
 
 M.bulkDataPath =  vim.fn.stdpath("cache") .. "/oracle_cards.json"
 
@@ -99,6 +100,15 @@ M.loadCards = function ()
 
   if M.sortPredicate then
     M.sortList(M.allCards, M.sortPredicate)
+  end
+
+  for _, v in pairs(M.allCards) do
+    if v.colors then
+      v.colors = Set(v.colors)
+    end
+    if v.color_identity then
+      v.color_identity = Set(v.color_identity)
+    end
   end
 
   if M.defaultQuery then
