@@ -26,11 +26,14 @@ Uses card data provided by Scryfall's bulk data API.
 # Use
 ## keybinds
 `<leader>su` will open the search window. If this is the first time you have opened the window you will be prompted to download the bulk data, which will take up to a minute. Loading all cards into memory takes around 3 to 5 seconds.
+
 `<leader>sc` will clear all card objects from memory. Please give the garbage collector a second to catch up.
 
 ## Opts
 `opts.bulkDataPath` defaults to `~/.cache/`.
+
 `opts.defaultQuery` runs this when loading all cards. I recommend setting to "game:paper f:vintage" to filter out tokens and memorabilia.
+
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
