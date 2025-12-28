@@ -23,8 +23,6 @@ Uses card data provided by Scryfall's bulk data API.
 - plenary.nvim
 - curl
 
-# Installation
-
 # Use
 ## keybinds
 `<leader>su` will open the search window. If this is the first time you have opened the window you will be prompted to download the bulk data, which will take up to a minute. Loading all cards into memory takes around 3 to 5 seconds.
