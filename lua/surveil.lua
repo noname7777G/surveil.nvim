@@ -12,7 +12,7 @@ local querySession = require'query'
 local picker = require'picker'
 local Set = require'Set'
 
-M.bulkDataPath =  vim.fn.stdpath("cache") .. "/oracle_cards.json"
+M.bulkDataPath = vim.fn.stdpath("cache") .. "/oracle_cards.json"
 
 ---@param opts table?
 M.setup = function (opts)
