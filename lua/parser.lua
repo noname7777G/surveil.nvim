@@ -131,7 +131,11 @@ local compareColors = function (self, oracleObject)
       if value.size == 0 then
         result = (oracleObjectColors == nil) or value.size == oracleObjectColors.size
       else
-        result = value.is_superset(oracleObjectColors)
+        if oracleObjectColors then
+          result = value.is_superset(oracleObjectColors)
+        else
+          result = false
+        end
       end
     else --self.field == "color_identity"
       result = oracleObjectColors.is_superset(value)

@@ -89,11 +89,18 @@ M.loadCards = function ()
     M.allCards = vim.json.decode(bulkDataJson, {object = true, array = true})
   else
     vim.ui.input({
-      prompt = "No card data found, would you like to download card data?",
+      prompt = "No card data found, would you like to download card data? [y/N]:",
       default = "n",
     }, function (input)
       if input == "y" or input == "Y" then
         M.updateCards()
+        bulkDataFile = io.open(M.bulkDataPath)
+        if bulkDataFile then
+          local bulkDataJson = bulkDataFile:read("a")
+          M.allCards = vim.json.decode(bulkDataJson, {object = true, array = true})
+        else
+          vim.print("Error loading bulk data.")
+        end
       end
     end)
   end
