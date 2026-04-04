@@ -32,7 +32,7 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 `<leader>sc` will clear all card objects from memory. Please give the garbage collector a second to catch up.
 
 ## Opts
-`opts.bulkDataPath` defaults to `~/.cache/`.
+`opts.cacheDir` defaults to `~/.cache/`.
 
 `opts.defaultQuery` runs this when loading all cards. I recommend setting to "game:paper f:vintage" to filter out tokens and memorabilia.
 

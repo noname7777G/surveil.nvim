@@ -2,23 +2,23 @@
 ---@field allCards table?
 ---@field trimmedCards table?
 ---@field defaultQuery string?
----@field bulkDataPath string
+---@field cacheDir string
 ---@field sortPredicate string?
 local M = {}
 
-local curlArgs = " --header User-Agent:nvim-surveil --header Accept:*/* --silent "
+local curlArgs = "--header User-Agent:nvim-surveil --header Accept:*/* --silent"
 local utils = require 'utils'
 local querySession = require 'query'
 local picker = require 'picker'
 local Set = require 'Set'
 
-M.bulkDataPath = vim.fn.stdpath("cache") .. "/oracle_cards.json"
+M.cacheDir = vim.fn.stdpath("cache")
 
 ---@param opts table?
 M.setup = function(opts)
   opts = opts or {}
 
-  M.bulkDataPath = opts.bulkDataPath or M.bulkDataPath
+  M.cacheDir = opts.casheDir or M.cacheDir
   M.defaultQuery = opts.defaultQuery
   M.sortPredicate = opts.sortPredicate
 end
@@ -62,29 +62,40 @@ M.setDefaultQuery = function(query)
 end
 
 M.updateCards = function()
-  local tempFileName = os.tmpname()
-
-  local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/oracle-cards" ..
-    curlArgs .. "> " .. tempFileName)
-
+  local ok, str, code = os.execute("curl https://mtgjson.com/api/v5/AtomicCards.json.zip" ..
+    " --output " .. M.cacheDir .. "/atomicCards.json.zip " .. curlArgs)
   if not ok then
     print(str .. code)
     return
   end
 
-  local tempFile = io.open(tempFileName)
-  if tempFile == nil then
-    print "Issue opening temp file (surveil.lua line 75)"
+  ok, str, code = os.execute("curl https://mtgjson.com/api/v5/AtomicCards.json.zip.sha256" ..
+    " --output " .. M.cacheDir .. "/atomicCards.json.zip.sha256 " .. curlArgs)
+  if not ok then
+    print(str .. code)
     return
   end
-  local json = tempFile:read()
 
-  local jsonObj = vim.json.decode(json, { object = true, array = true })
-  os.execute("curl " .. jsonObj.download_uri .. curlArgs .. "-o " .. M.bulkDataPath)
+  ok, str, code = os.execute("sha256sum " ..
+    M.cacheDir .. "/atomicCards.json.zip > " .. M.cacheDir .. "/generatedAtomicCards.json.zip.sha256")
+  if not ok then
+    print(str .. code)
+    return
+  end
+
+  local cardArchiveHash = io.open(M.cacheDir .. "/generatedAtomicCards.json.zip.sha256"):read()
+  local providedHash = io.open(M.cacheDir .. "/atomicCards.json.zip.sha256"):read()
+
+  if not string.match(cardArchiveHash, providedHash) then
+    print("Archive hash does not match provided hash! Stopping decompression")
+    return
+  end
+
+  ok, str, code = os.execute("unzip " .. M.cacheDir .. "/atomicCards.json.zip -d " .. M.cacheDir)
 end
 
 M.loadCards = function()
-  local bulkDataFile = io.open(M.bulkDataPath)
+  local bulkDataFile = io.open(M.cacheDir .. "/AtomiCards.json")
 
   if bulkDataFile then
     local bulkDataJson = bulkDataFile:read("a")
@@ -96,7 +107,7 @@ M.loadCards = function()
     }, function(input)
       if input == "y" or input == "Y" then
         M.updateCards()
-        bulkDataFile = io.open(M.bulkDataPath)
+        bulkDataFile = io.open(M.cacheDir .. "/atomicCards.json")
         if bulkDataFile then
           local bulkDataJson = bulkDataFile:read("a")
           M.allCards = vim.json.decode(bulkDataJson, { object = true, array = true })
