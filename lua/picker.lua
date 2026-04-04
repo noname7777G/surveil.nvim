@@ -1,4 +1,4 @@
-local popup = require'plenary.popup'
+local popup = require 'plenary.popup'
 
 ---@class searchMenu
 ---@field private resultsWindow number?
@@ -14,7 +14,7 @@ local popup = require'plenary.popup'
 ---@field opts table
 local searchMenu = {}
 
-searchMenu.querySession = require'query'
+searchMenu.querySession = require 'query'
 
 searchMenu.opts = {}
 
@@ -36,8 +36,9 @@ function searchMenu.moveCursorDown()
   if pos[1] < winBottom then
     pos[1] = pos[1] + 1
     vim.api.nvim_win_set_cursor(0, pos)
-    searchMenu:displayHighlightedCard()
   end
+
+  searchMenu:displayHighlightedCard()
 end
 
 function searchMenu:ShowMenu(target)
@@ -68,32 +69,32 @@ function searchMenu:ShowMenu(target)
 
   searchMenu.resultsWindow = popup.create(searchMenu.opts,
     {
-        title = "Results",
-        line = topLeftLine - 1,
-        col = topLeftColumn,
-        minwidth = actualWidth,
-        minheight = actualHeight,
-        borderchars = { "─", "│", "─", "│", "├", "┬	", "┴", "╰" },
+      title = "Results",
+      line = topLeftLine - 1,
+      col = topLeftColumn,
+      minwidth = actualWidth,
+      minheight = actualHeight,
+      borderchars = { "─", "│", "─", "│", "├", "┬	", "┴", "╰" },
     })
 
   searchMenu.cardWindow = popup.create(searchMenu.opts,
     {
-        title = "Card",
-        line = topLeftLine - 1,
-        col = topLeftColumn + actualWidth + 2,
-        minwidth = actualWidth,
-        minheight = actualHeight,
-        borderchars = { "─", "│", "─", " ", "─", "┤", "╯", "─" },
+      title = "Card",
+      line = topLeftLine - 1,
+      col = topLeftColumn + actualWidth + 2,
+      minwidth = actualWidth,
+      minheight = actualHeight,
+      borderchars = { "─", "│", "─", " ", "─", "┤", "╯", "─" },
     })
 
   searchMenu.searchWindow = popup.create(searchMenu.opts,
     {
-        title = "Surveil",
-        line = topLeftLine - 4,
-        col = topLeftColumn,
-        minwidth = (actualWidth * 2) + 2,
-        minheight = 1,
-        borderchars = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
+      title = "Surveil",
+      line = topLeftLine - 4,
+      col = topLeftColumn,
+      minwidth = (actualWidth * 2) + 2,
+      minheight = 1,
+      borderchars = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
     })
 
   searchMenu.resultWinBufnr = vim.api.nvim_win_get_buf(searchMenu.resultsWindow)
@@ -101,32 +102,34 @@ function searchMenu:ShowMenu(target)
   searchMenu.searchWinBufnr = vim.api.nvim_win_get_buf(searchMenu.searchWindow)
   searchMenu.querySession.setPrimaryTable(target)
 
-  vim.api.nvim_buf_attach(searchMenu.searchWinBufnr, true, {on_lines = function(_, BufNum, _, firstLine, lastLine)
-    local line = vim.api.nvim_buf_get_lines(BufNum, firstLine, lastLine, false)[1]
+  vim.api.nvim_buf_attach(searchMenu.searchWinBufnr, true, {
+    on_lines = function(_, BufNum, _, firstLine, lastLine)
+      local line = vim.api.nvim_buf_get_lines(BufNum, firstLine, lastLine, false)[1]
 
-    searchMenu.currentResults = searchMenu.querySession.query(line) or {}
+      searchMenu.currentResults = searchMenu.querySession.query(line) or {}
 
-    vim.schedule(function()
-      vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, {})
-    end)
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, {})
+      end)
 
-    local cardNames = {}
-    for _, card in pairs(searchMenu.currentResults) do
-      table.insert(cardNames, card.name .. " | " .. (card.type_line or "") .. " | " .. (card.mana_cost or ""))
+      local cardNames = {}
+      for _, card in pairs(searchMenu.currentResults) do
+        table.insert(cardNames, card.name .. " | " .. (card.type_line or "") .. " | " .. (card.mana_cost or ""))
+      end
+
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, cardNames)
+      end)
     end
+  })
 
-    vim.schedule(function()
-      vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, cardNames)
-    end)
-  end})
+  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, { buffer = searchMenu.searchWinBufnr })
+  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, { buffer = searchMenu.resultWinBufnr })
+  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, { buffer = searchMenu.cardWinBufnr })
 
-  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, {buffer = searchMenu.searchWinBufnr})
-  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, {buffer = searchMenu.resultWinBufnr})
-  vim.keymap.set('n', '<esc>', searchMenu.CloseMenu, {buffer = searchMenu.cardWinBufnr})
-
-  vim.keymap.set('n', 'j', searchMenu.moveToResults, {buffer = searchMenu.searchWinBufnr})
-  vim.keymap.set('n', 'k', searchMenu.moveCursorUp, {buffer = searchMenu.resultWinBufnr})
-  vim.keymap.set('n', 'j', searchMenu.moveCursorDown, {buffer = searchMenu.resultWinBufnr})
+  vim.keymap.set('n', 'j', searchMenu.moveToResults, { buffer = searchMenu.searchWinBufnr })
+  vim.keymap.set('n', 'k', searchMenu.moveCursorUp, { buffer = searchMenu.resultWinBufnr })
+  vim.keymap.set('n', 'j', searchMenu.moveCursorDown, { buffer = searchMenu.resultWinBufnr })
 
   vim.wo[searchMenu.searchWindow].wrap = false
   vim.wo[searchMenu.resultsWindow].wrap = false
@@ -143,17 +146,18 @@ function searchMenu:displayHighlightedCard()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   local rowCard
 
-  if searchMenu.currentResults then
-    rowCard = searchMenu.currentResults[row]
-  else
-    return
-  end
+  rowCard = searchMenu.currentResults[row]
 
   if not rowCard then return end
 
-  vim.schedule(function ()
+  vim.schedule(function()
+    local nameLength = #rowCard.name
+    local manaCost = (rowCard.mana_cost or "")
+    local manaCostLength = #manaCost
+    local bufferWidth = vim.api.nvim_win_get_width(searchMenu.cardWindow)
+
     local display = {
-      rowCard.name .. "           " .. (rowCard.mana_cost or ""),
+      rowCard.name .. "           " .. manaCost,
       "", "", "", "", "", "", "", "", "",
       (rowCard.type_line or "") .. "        " .. (rowCard.set or ""),
       "",

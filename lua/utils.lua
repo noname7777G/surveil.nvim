@@ -1,6 +1,6 @@
 local M = {}
 
-M.evaluatePT = function (value)
+M.evaluatePT = function(value)
   local try = tonumber(value or 0)
 
   if try then

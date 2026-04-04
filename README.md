@@ -11,7 +11,7 @@ Uses card data provided by Scryfall's bulk data API.
 - c/color
 - id/identity
 - mv/manavalue
-- game
+- game (currenly broken)
 - f/format
 - pow/power
 - tou/toughness
@@ -39,12 +39,13 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
+- **Fix the game field**
 - manacost field
 - devotion field
 - produces field
 - mv/manavalue odd/even
 - pt/powtou field
-- grouping and logical `OR`.
+- grouping and logical `or`.
 - completion based on Scryfall catalogs
 - proper support for double-faced cards
 - rulings
