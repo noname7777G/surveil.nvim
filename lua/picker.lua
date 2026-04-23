@@ -151,16 +151,10 @@ function searchMenu:displayHighlightedCard()
   if not rowCard then return end
 
   vim.schedule(function()
-    local nameLength = #rowCard.name
-    local manaCost = (rowCard.mana_cost or "")
-    local manaCostLength = #manaCost
-    local bufferWidth = vim.api.nvim_win_get_width(searchMenu.cardWindow)
-
     local display = {
-      rowCard.name .. "           " .. manaCost,
-      "", "", "", "", "", "", "", "", "",
-      (rowCard.type_line or "") .. "        " .. (rowCard.set or ""),
-      "",
+      rowCard.name,
+      (rowCard.mana_cost or ""),
+      (rowCard.type_line or ""),
     }
 
     if rowCard.oracle_text then

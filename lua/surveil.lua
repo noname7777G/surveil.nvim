@@ -2,10 +2,11 @@ local utils = require 'utils'
 local querySession = require 'query'
 local picker = require 'picker'
 local Set = require 'Set'
+require 'card'
 
 ---@class surveil
----@field allCards table
----@field trimmedCards table?
+---@field allCards card[]
+---@field trimmedCards card[]?
 ---@field defaultQuery string?
 ---@field bulkDataPath string
 ---@field sortPredicate string?
@@ -76,7 +77,6 @@ local function stripData(rawJsonObj)
   local oracleObjects = {}
   for _, card in ipairs(rawJsonObj) do
     local oracleObject = oracleObjects[card.name]
-
     if oracleObject then
       if oracleObject.games then
         for _, game in ipairs(oracleObject.games) do
@@ -84,6 +84,20 @@ local function stripData(rawJsonObj)
         end
       end
     else
+      card.arena_id = nil
+      card.id = nil
+      card.lang = nil
+      card.mtgo_id = nil
+      card.mtgo_foil_id = nil
+      card.multiverse_ids = nil
+      card.resource_id = nil
+      card.tcgplayer_id = nil        -- To remain nil until they stop union busting
+      card.tcgplayer_etched_id = nil -- To remain nil until they stop union busting
+      card.cardmarket_id = nil
+      card.object = nil
+      card.scryfall_uri = nil
+      card.uri = nil
+
       card.artist = nil
       card.artist_ids = nil
       --card.attraction_lights = nil
@@ -100,7 +114,8 @@ local function stripData(rawJsonObj)
       card.frame = nil
       card.full_art = nil
 
-      for _, game in ipairs(card) do
+      card.availabilities = {}
+      for _, game in ipairs(card.games) do
         card.availabilities[game] = true
       end
       card.games = nil
@@ -149,6 +164,8 @@ local function stripData(rawJsonObj)
           face.watermark = nil
         end
       end
+
+      ---@cast card card
 
       oracleObjects[card.name] = card
     end
@@ -235,18 +252,11 @@ M.loadCards = function()
   end
 
   for _, v in pairs(M.allCards) do
-    if v.colors then
-      v.colors = Set(v.colors)
-    end
-    if v.color_identity then
-      v.color_identity = Set(v.color_identity)
-    end
-    if v.color_indicator then
-      v.color_indicator = Set(v.color_indicator)
-    end
-    if v.produced_mana then
-      v.produced_mana = Set(v.produced_mana)
-    end
+    ---@cast v card
+    v.colors = Set(v.colors or {})
+    v.color_identity = Set(v.color_identity or {})
+    v.color_indicator = Set(v.color_indicator or {})
+    v.produced_mana = Set(v.produced_mana or {})
   end
 
   if M.defaultQuery then
