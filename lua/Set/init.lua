@@ -1,19 +1,33 @@
 --Copied directly from https://github.com/EvandroLG/set-lua
 
+---@class Set
+---@field items table
+---@field size integer
+---@field insert function
+---@field has function
+---@field clear function
+---@field delete function
+---@field each function
+---@field every function
+---@field intersection function
+---@field difference function
+---@field symmetric_difference function
+---@field is_superset function
+
 local utils = require('Set.utils')
 
--- Set lets you store unique values of any type
--- @param list {table}
--- @returns {table}
+---Set lets you store unique values of any type
+---@param list table
+---@returns Set
 function Set(list)
   local self = {}
 
-  -- Items presented in Set
-  -- @type {table}
+  ---Items presented in Set
+  ---@type table
   self.items = {}
 
-  -- Current Set length
-  -- @type {number}
+  ---Current Set length
+  ---@type number
   self.size = 0
 
   if type(list) == 'table' then
@@ -23,9 +37,9 @@ function Set(list)
     end
   end
 
-  -- Appends value to the Set object
-  -- @param value {any}
-  -- @returns {void}
+  ---Appends value to the Set object
+  ---@param value any
+  ---@returns {void}
   self.insert = function(value)
     if not self.items[value] then
       self.items[value] = true
@@ -33,23 +47,23 @@ function Set(list)
     end
   end
 
-  -- Checks if value is present in the Set object or not
-  -- @param value {any}
-  -- @returns {boolean}
+  ---Checks if value is present in the Set object or not
+  ---@param value any
+  ---@returns {boolean}
   self.has = function(value)
     return self.items[value] == true
   end
 
-  -- Removes all items from the Set object
-  -- @returns {void}
+  ---Removes all items from the Set object
+  ---@returns {void}
   self.clear = function()
     self.items = {}
     self.size = 0
   end
 
-  -- Removes item from the Set object and returns a boolean value asserting wheater item was removed or not
-  -- @param value {any}
-  -- @returns {boolean}
+  ---Removes item from the Set object and returns a boolean value asserting wheater item was removed or not
+  ---@param value any
+  ---@returns {boolean}
   self.delete = function(value)
     if self.items[value] then
       self.items[value] = nil
@@ -60,18 +74,18 @@ function Set(list)
     return false
   end
 
-  -- Calls function once for each item present in the Set object without preserve insertion order
-  -- @param callback {function}
-  -- @returns {void}
+  ---Calls function once for each item present in the Set object without preserve insertion order
+  ---@param callback function
+  ---@returns {void}
   self.each = function(callback)
     for key in pairs(self.items) do
       callback(key)
     end
   end
 
-  -- Returns true whether all items pass the test provided by the callback function
-  -- @param callback {function}
-  -- @returns {boolean}
+  ---Returns true whether all items pass the test provided by the callback function
+  ---@param callback function
+  ---@returns {boolean}
   self.every = function(callback)
     for key in pairs(self.items) do
       if not callback(key) then
@@ -82,11 +96,11 @@ function Set(list)
     return true
   end
 
-  -- Returns a new Set that contains all items from the original Set and all items from the specified Sets
-  -- @param {Set[]}
-  -- @returns Set
+  ---Returns a new Set that contains all items from the original Set and all items from the specified Sets
+  ---@varargs Set[]
+  ---@returns set
   self.union = function(...)
-    local args = {...}
+    local args = { ... }
     local result = Set(utils.to_array(self.items))
 
     for _, set in ipairs(args) do
@@ -98,12 +112,12 @@ function Set(list)
     return result
   end
 
-  -- Returns a new Set that contains all elements that are common in all Sets
-  -- @param {Set[]}
-  -- @returns Set
+  ---Returns a new Set that contains all elements that are common in all Sets
+  ---@varargs Set
+  ---@returns Set
   self.intersection = function(...)
-    local args = {...}
-    local result = Set()
+    local args = { ... }
+    local result = Set({})
 
     self.each(function(value)
       local is_common = true
@@ -123,12 +137,12 @@ function Set(list)
     return result
   end
 
-  -- Returns a new Set that contains the items that only exist in the original Set
-  -- @param {Set[]}
-  -- @returns Set
+  ---Returns a new Set that contains the items that only exist in the original Set
+  ---@varargs Set
+  ---@returns Set
   self.difference = function(...)
-    local args = {...}
-    local result = Set()
+    local args = { ... }
+    local result = Set({})
 
     self.each(function(value)
       local is_common = false
@@ -148,9 +162,9 @@ function Set(list)
     return result
   end
 
-  -- Returns a symetric difference of two Sets
-  -- @param {Set}
-  -- @returns {Set}
+  ---Returns a symetric difference of two Sets
+  ---@param set Set
+  ---@returns set
   self.symmetric_difference = function(set)
     local difference = Set(utils.to_array(self.items))
 
@@ -165,11 +179,10 @@ function Set(list)
     return difference
   end
 
-  -- Returns true if set has all items present in the subset
-  -- @param {Set}
-  -- @returns {boolean}
+  ---Returns true if set has all items present in the subset
+  ---@param subset Set
+  ---@returns boolean
   self.is_superset = function(subset)
-
     return self.every(function(value)
       return subset.has(value)
     end)

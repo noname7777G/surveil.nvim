@@ -3,16 +3,16 @@ local parser = require 'parser'
 --TODO: memoize results for future queries so that we do not have to perform redundant queries.
 
 ---@class querySession
----@field primaryTable table
+---@field primaryTable card[]
 local M = {}
 
----@param list table
+---@param list card[]
 M.setPrimaryTable = function(list)
   M.primaryTable = list
 end
 
 ---comment
----@param list table?
+---@param list card[]?
 ---@param query string?
 M.queryTable = function(list, query)
   if not list then return nil end
@@ -49,7 +49,7 @@ M.queryTable = function(list, query)
 end
 
 ---@param query string?: The query to run. For a full list of currently implemented syntax, please see README.md. Returns all cards if empty or nil.
----@return table?: The results of the query. Will return an empty table if there are no results. Will return nil if the primaryTable is not set.
+---@return card[]?: The results of the query. Will return an empty table if there are no results. Will return nil if the primaryTable is not set.
 M.query = function(query)
   if not M.primaryTable then return nil end
   if not query or query == "" then return M.primaryTable end

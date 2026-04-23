@@ -1,4 +1,5 @@
 local utils = require 'utils'
+local set = require 'Set'
 
 ---@class queryPair
 ---@field public inverted boolean
@@ -126,15 +127,11 @@ local compareColors = function(self, oracleObject)
   local result
 
   if operation == "=" then
-    if value.symetric_difference(oracleObjectColors).items[1] then
-      result = true
-    else
-      result = false
-    end
+    result = value.symmetric_difference(oracleObjectColors).size == 0
   elseif operation == ":" then
     if field == "colors" then
       if value.size == 0 then
-        result = (oracleObjectColors == nil) or value.size == oracleObjectColors.size
+        result = oracleObjectColors.size == 0
       else
         if oracleObjectColors then
           result = value.is_superset(oracleObjectColors)
@@ -150,14 +147,14 @@ local compareColors = function(self, oracleObject)
   elseif operation == ">=" then
     result = oracleObjectColors.is_superset(value)
   elseif operation == "<" then
-    if value.symetric_difference(oracleObjectColors).items[1] then
-      result = value.is_superset(oracleObjectColors)
+    if value.symmetric_difference(oracleObjectColors).size > 0 then
+      result = oracleObjectColors.is_superset(value)
     else
       result = false
     end
   else --operation == ">"
-    if value.symetric_difference(oracleObjectColors).items[1] then
-      result = oracleObjectColors.is_superset(value)
+    if value.symmetric_difference(oracleObjectColors).size > 0 then
+      result = value.is_superset(oracleObjectColors)
     else
       result = false
     end
@@ -223,7 +220,7 @@ local translationTable = {
   tou = "toughness",
   loy = "loyalty",
 
-  game = "games",
+  game = "availabilities",
 }
 
 local functionKey = {
@@ -240,13 +237,8 @@ local functionKey = {
     return false ~= self.inverted
   end,
 
-  games = function(self, oracleObject)
-    local ret
-    for _, v in pairs(oracleObject["games"]) do
-      ret = (v == self.value) ~= self.inverted
-      if ret then break end
-    end
-    return ret
+  availabilities = function(self, oracleObject)
+    return oracleObject.availabilities[self.value]
   end,
 
   legalities = function(self, oracleObject)
@@ -281,7 +273,7 @@ local attachFunction = function(t)
   t.value = tonumber(t.value) or t.value
   if t.field == "colors" or t.field == "color_identity" then
     if type(t.value) == "string" then
-      t.value = Set(colorNames[string.lower(t.value or "")] or colorsToTable(t.value) or {})
+      t.value = set(colorNames[string.lower(t.value or "")] or colorsToTable(t.value) or {})
       t.compare = compareColors
     else
       t.compare = compareColorCount

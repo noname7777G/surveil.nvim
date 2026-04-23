@@ -1,0 +1,56 @@
+require 'Set'
+---@meta
+
+---@class (exact) card
+---@field layout string
+---@field print_search_uri string
+---@field rulings_uri string
+---@field all_parts related_card[]?
+---@field card_faces card_face[]?
+---@field cmc number
+---@field color_identity Set
+---@field color_indicator Set?
+---@field colors Set?
+---@field defense string?
+---@field edhrec_rank integer?
+---@field game_changer boolean?
+---@field hand_modifier string?
+---@field keywords string[]
+---@field legalities table
+---@field life_modifier string?
+---@field loyalty string?
+---@field mana_cost string?
+---@field name string
+---@field oracle_text string?
+---@field penny_rank integer?
+---@field power string?
+---@field produced_mana Set?
+---@field reserved boolean
+---@field toughness string?
+---@field type_line string
+---@field attraction_lights integer[]?
+---@field content_warning boolean?
+---@field flavor_name string?
+---@field availabilities table
+
+---@class (exact) card_face
+---@field cmc number?
+---@field color_indicator Set?
+---@field colors Set?
+---@field defense string?
+---@field layout string?
+---@field loyalty string?
+---@field mana_cost string
+---@field name string
+---@field oracle_text string?
+---@field power string?
+---@field toughness string?
+---@field type_line string?
+
+---@class (exact) related_card
+---@field id string
+---@field object string
+---@field component string
+---@field name string
+---@field type_line string
+---@field uri string
