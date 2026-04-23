@@ -38,7 +38,6 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
-- **Fix the game field**
 - manacost field
 - devotion field
 - produces field
