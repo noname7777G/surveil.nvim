@@ -1,26 +1,37 @@
----@class surveil
----@field allCards table?
----@field trimmedCards table?
----@field defaultQuery string?
----@field bulkDataPath string
----@field sortPredicate string?
-local M = {}
-
-local curlArgs = " --header User-Agent:nvim-surveil --header Accept:*/* --silent "
 local utils = require 'utils'
 local querySession = require 'query'
 local picker = require 'picker'
 local Set = require 'Set'
 
-M.bulkDataPath = vim.fn.stdpath("cache") .. "/oracle_cards.json"
+---@class surveil
+---@field allCards table
+---@field trimmedCards table?
+---@field defaultQuery string?
+---@field bulkDataPath string
+---@field sortPredicate string?
+---@field cacheDir string
+---@field curlArgs string
+local M = {}
 
----@param opts table?
+---@class surveilOpts
+---@field bulkDataPath string?
+---@field defaultQuery string?
+---@field sortPredicate string?
+---@field cacheDir string?
+
+M.bulkDataPath = vim.fn.stdpath("cache") .. "/oracle_cards.json"
+M.curlArgs = " --header User-Agent:nvim-surveil --header Accept:*/* --silent "
+M.cacheDir = vim.fn.stdpath("cache")
+
+---@param opts surveilOpts?
 M.setup = function(opts)
   opts = opts or {}
+
 
   M.bulkDataPath = opts.bulkDataPath or M.bulkDataPath
   M.defaultQuery = opts.defaultQuery
   M.sortPredicate = opts.sortPredicate
+  M.cacheDir = opts.cacheDir or M.cacheDir
 end
 
 ---Mostly for internal use but maybe you can get some use out of it.
@@ -61,11 +72,101 @@ M.setDefaultQuery = function(query)
   end
 end
 
+local function stripData(rawJsonObj)
+  local oracleObjects = {}
+  for _, card in ipairs(rawJsonObj) do
+    local oracleObject = oracleObjects[card.name]
+
+    if oracleObject then
+      if oracleObject.games then
+        for _, game in ipairs(oracleObject.games) do
+          oracleObject.availabilities[game] = true
+        end
+      end
+    else
+      card.artist = nil
+      card.artist_ids = nil
+      --card.attraction_lights = nil
+      card.booster = nil
+      card.border_color = nil
+      card.card_back_id = nil
+      card.collector_number = nil
+      --card.content_warning = nil
+      card.digital = nil
+      card.finishes = nil
+      --card.flavor_name = nil
+      card.flavor_text = nil
+      card.frame_effects = nil
+      card.frame = nil
+      card.full_art = nil
+
+      for _, game in ipairs(card) do
+        card.availabilities[game] = true
+      end
+      card.games = nil
+
+      card.highres_image = nil
+      card.illustration_id = nil
+      card.image_status = nil
+      card.image_uris = nil
+      card.oversized = nil
+      card.prices = nil
+      card.printed_name = nil
+      card.printed_text = nil
+      card.printed_type_line = nil
+      card.promo = nil
+      card.promo_types = nil
+      card.purchase_uris = nil
+      card.rarity = nil
+      card.related_uris = nil
+      card.released_at = nil
+      card.reprint = nil
+      card.scryfall_set_uri = nil
+      card.set_name = nil
+      card.search_uri = nil
+      card.set_type = nil
+      card.set_uri = nil
+      card.set = nil
+      card.set_id = nil
+      card.story_spotlight = nil
+      card.textless = nil
+      card.variation = nil
+      card.variation_of = nil
+      card.security_stamp = nil
+      card.watermark = nil
+      card.preview = nil
+
+      if card.card_faces then
+        for _, face in ipairs(card.card_faces) do
+          face.artist = nil
+          face.artist_id = nil
+          face.flavor_text = nil
+          face.illustration_id = nil
+          face.image_uris = nil
+          face.printed_name = nil
+          face.printed_text = nil
+          face.printed_type_line = nil
+          face.watermark = nil
+        end
+      end
+
+      oracleObjects[card.name] = card
+    end
+  end
+
+  local orderedList = {}
+  for _, card in pairs(oracleObjects) do
+    table.insert(orderedList, card)
+  end
+
+  return orderedList
+end
+
 M.updateCards = function()
   local tempFileName = os.tmpname()
 
-  local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/oracle-cards" ..
-    curlArgs .. "> " .. tempFileName)
+  local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/default-cards" ..
+    M.curlArgs .. "> " .. tempFileName)
 
   if not ok then
     print(str .. code)
@@ -80,8 +181,30 @@ M.updateCards = function()
   local json = tempFile:read()
 
   local jsonObj = vim.json.decode(json, { object = true, array = true })
-  os.execute("curl " .. jsonObj.download_uri .. curlArgs .. "-o " .. M.bulkDataPath)
+  --os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
+
+  local rawBulkFile = io.open(M.cacheDir .. "/raw_bulk.json", "r")
+  if not rawBulkFile then
+    print "Issue opening raw bulk data."
+    return
+  end
+
+  local rawJson = rawBulkFile:read("a")
+  vim.print(#rawJson)
+  local rawJsonObj = vim.json.decode(rawJson, { object = true, array = true })
+
+  local oracleObjects = stripData(rawJsonObj)
+  local oracleObjectsJson = vim.json.encode(oracleObjects)
+
+  local bulkFile = io.open(M.bulkDataPath, "w+")
+  if not bulkFile then
+    print "Issue opening bulk data file."
+    return
+  end
+
+  bulkFile:write(oracleObjectsJson)
 end
+
 
 M.loadCards = function()
   local bulkDataFile = io.open(M.bulkDataPath)
@@ -117,6 +240,12 @@ M.loadCards = function()
     end
     if v.color_identity then
       v.color_identity = Set(v.color_identity)
+    end
+    if v.color_indicator then
+      v.color_indicator = Set(v.color_indicator)
+    end
+    if v.produced_mana then
+      v.produced_mana = Set(v.produced_mana)
     end
   end
 
