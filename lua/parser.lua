@@ -168,17 +168,17 @@ local compareColors = function(self, oracleObject)
 end
 
 local compareColorCount = function(self, oracleObject)
-  local objectColorCount = #(oracleObject[self.field] or {})
+  local objectColorCount = oracleObject[self.field].size
 
-  if self.operation == "=" then
+  if self.operation == "=" or self.operation == ":" then
     return self.value == objectColorCount
   elseif self.operation == "<=" then
-    return self.value <= objectColorCount
-  elseif self.operation == ">=" then
     return self.value >= objectColorCount
+  elseif self.operation == ">=" then
+    return self.value <= objectColorCount
   elseif self.operation == "<" then
-    return self.value < objectColorCount
-  else
+    return self.value > objectColorCount
+  else -- self.operation == ">"
     return self.value < objectColorCount
   end
 end
