@@ -11,13 +11,12 @@ Uses card data provided by Scryfall's bulk data API.
 - c/color
 - id/identity
 - mv/manavalue
-- game (currenly broken)
+- game
 - f/format
 - pow/power
 - tou/toughness
 - loy/loyalty
 - defense
-- s/set/e/edition
 
 ## Depends on:
 - plenary.nvim
@@ -39,7 +38,6 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
-- **Fix the game field**
 - manacost field
 - devotion field
 - produces field
@@ -53,20 +51,19 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 - ~ substitution
 - make o/oracle not search reminder text
 - fo/fulloracle field
-- r/rarity field
 - sort field
 
 The following fields are not planned for implementation:
 - function
     - relies on the tagger project, which does not release their data in bulk publicly
-- all art fields
+- all art and art related fields
     - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
-    - this would also require changing the bulk-data source used to one of Scryfall's larger bulk-data files and neovim already chugs with just over 35k card objects loaded
 - is
     - like the function field this relies on data that is not public.
     - some of these may be implemented as "preset" queries, eg `is:commander` just translates to `t:legend f:commander (t:creature or t:vehicle or t:spaceship)`
 - cn/number
 - b/block
+- s/set
 - in
 - all cube fields
 - all price fields
