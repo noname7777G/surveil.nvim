@@ -3,7 +3,7 @@
 Offline search for Magic, the Gathering(TM) cards.
 Uses card data provided by Scryfall's bulk data API.
 
-## Implemented fields
+## Implemented fields and features
 - simple card name search
 - quotes
 - o/oracle (currently functions similar to the fo/fullorcale field in that it will also search reminder text)
@@ -17,6 +17,8 @@ Uses card data provided by Scryfall's bulk data API.
 - tou/toughness
 - loy/loyalty
 - defense
+- in
+- ~ substitution
 
 ## Depends on:
 - plenary.nvim
@@ -48,12 +50,11 @@ Set functionality grabbed from https://github.com/EvandroLG/set-lua
 - proper support for double-faced cards
 - rulings
 - mana-moji?
-- ~ substitution
 - make o/oracle not search reminder text
 - fo/fulloracle field
 - sort field
 
-The following fields are not planned for implementation:
+## The following fields are not planned for implementation:
 - function
     - relies on the tagger project, which does not release their data in bulk publicly
 - all art and art related fields
@@ -64,6 +65,5 @@ The following fields are not planned for implementation:
 - cn/number
 - b/block
 - s/set
-- in
 - all cube fields
 - all price fields

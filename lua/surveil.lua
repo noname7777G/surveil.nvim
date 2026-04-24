@@ -75,14 +75,19 @@ end
 
 local function stripData(rawJsonObj)
   local oracleObjects = {}
+  ---@cast oracleObjects card[]
+
   for _, card in ipairs(rawJsonObj) do
     local oracleObject = oracleObjects[card.name]
+
     if oracleObject then
-      if oracleObject.games then
-        for _, game in ipairs(oracleObject.games) do
+      if card.games then
+        for _, game in ipairs(card.games) do
           oracleObject.availabilities[game] = true
         end
       end
+
+      oracleObject.sets[#oracleObject.sets + 1] = card.set
     else
       card.arena_id = nil
       card.id = nil
@@ -100,15 +105,12 @@ local function stripData(rawJsonObj)
 
       card.artist = nil
       card.artist_ids = nil
-      --card.attraction_lights = nil
       card.booster = nil
       card.border_color = nil
       card.card_back_id = nil
       card.collector_number = nil
-      --card.content_warning = nil
       card.digital = nil
       card.finishes = nil
-      --card.flavor_name = nil
       card.flavor_text = nil
       card.frame_effects = nil
       card.frame = nil
@@ -141,7 +143,11 @@ local function stripData(rawJsonObj)
       card.search_uri = nil
       card.set_type = nil
       card.set_uri = nil
+
+      card.sets = {}
+      card.sets[1] = card.set
       card.set = nil
+
       card.set_id = nil
       card.story_spotlight = nil
       card.textless = nil
@@ -167,7 +173,11 @@ local function stripData(rawJsonObj)
 
       ---@cast card card
 
-      --card.type_line = card.type_line:gsub("—", "-")
+      if card.type_line then
+        card.type_line = card.type_line:gsub("\226\128\148", "-")
+      end
+
+      card.nameNoEpithet = card.name:match("^([^,]+),")
 
       oracleObjects[card.name] = card
     end
@@ -200,7 +210,7 @@ M.updateCards = function()
   local json = tempFile:read()
 
   local jsonObj = vim.json.decode(json, { object = true, array = true })
-  os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
+  --os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
 
   local rawBulkFile = io.open(M.cacheDir .. "/raw_bulk.json", "r")
   if not rawBulkFile then

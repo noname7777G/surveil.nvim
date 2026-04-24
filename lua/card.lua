@@ -32,6 +32,8 @@ require 'Set'
 ---@field content_warning boolean?
 ---@field flavor_name string?
 ---@field availabilities table
+---@field sets string[]
+---@field nameNoEpithet string?
 
 ---@class (exact) card_face
 ---@field cmc number?

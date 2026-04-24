@@ -30,7 +30,22 @@ local compareNumber = function(self, oracleObject)
   end
 end
 
+local tidleExpansions = {
+  "this card",
+  "this creature",
+  "this spell",
+  "this artifact",
+  "this enchantment",
+  "this land",
+  "this planeswalker",
+}
+
+---@param oracleObject card
 local compareText = function(self, oracleObject)
+  if not oracleObject[self.field] then
+    return false
+  end
+
   local queryValue
 
   if type(self.value) == "string" then
@@ -39,14 +54,31 @@ local compareText = function(self, oracleObject)
     queryValue = self.value
   end
 
-  local fieldValue = string.lower(oracleObject[self.field] or "")
+  local fieldValue = oracleObject[self.field]:lower()
 
   local result
 
   if self.operation == "=" then
     result = fieldValue == queryValue
   elseif self.operation == ":" then
-    result = fieldValue:find(queryValue, 1, true)
+    if type(queryValue) == "string" and queryValue:find("~", 1, true) then
+      local expandedQueryValue = queryValue:gsub("~", oracleObject.nameNoEpithet or oracleObject.name)
+
+      if fieldValue:find(expandedQueryValue, 1, true) then
+        result = true
+      else
+        for _, v in ipairs(tidleExpansions) do
+          expandedQueryValue = queryValue:gsub("~", v)
+
+          if fieldValue:lower():find(expandedQueryValue, 1, true) then
+            result = true
+            break
+          end
+        end
+      end
+    else
+      result = fieldValue:find(queryValue, 1, true)
+    end
   elseif self.operation == "<=" or self.operation == "<" then
     return true
   elseif self.operation == ">=" then
@@ -209,10 +241,6 @@ local translationTable = {
   id = "color_identity",
   identity = "color_identity",
 
-  e = "set",
-  edition = "set",
-  s = "set",
-
   f = "legalities",
   format = "legalities",
 
@@ -222,6 +250,8 @@ local translationTable = {
 
   game = "availabilities",
 }
+
+translationTable["in"] = "sets"
 
 local functionKey = {
   oracle_text = compareText,
@@ -238,6 +268,15 @@ local functionKey = {
 
   availabilities = function(self, oracleObject)
     return oracleObject.availabilities[self.value]
+  end,
+
+  sets = function(self, oracleObject)
+    for _, v in ipairs(oracleObject.sets) do
+      if v:upper() == self.value:upper() then
+        return true ~= self.inverted
+      end
+    end
+    return false ~= self.inverted
   end,
 
   legalities = function(self, oracleObject)

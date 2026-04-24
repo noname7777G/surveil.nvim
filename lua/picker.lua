@@ -48,19 +48,9 @@ function searchMenu:ShowMenu(target)
   local screenHeight = vim.go.lines
   local screenWidth = vim.go.columns
 
-  local actualHeight
-  if desiredHeight > screenHeight - 10 then
-    actualHeight = screenHeight - 10
-  else
-    actualHeight = desiredHeight
-  end
-
-  local actualWidth
-  if desiredWidth > screenWidth - 10 then
-    actualWidth = screenWidth - 10
-  else
-    actualWidth = desiredWidth
-  end
+  local actualHeight = math.min(desiredHeight, screenHeight - 10)
+  local actualWidth = math.min(desiredWidth, screenWidth - 10)
+  local halfWidth = math.floor(actualWidth / 2)
 
   local topLeftLine = math.floor((screenHeight - actualHeight) / 2)
   local topLeftColumn = math.floor((screenWidth - actualWidth) / 3)
@@ -82,8 +72,8 @@ function searchMenu:ShowMenu(target)
       title = "Card",
       line = topLeftLine - 1,
       col = topLeftColumn + actualWidth + 2,
-      minwidth = actualWidth,
-      minheight = actualHeight,
+      minwidth = halfWidth,
+      minheight = halfWidth,
       borderchars = { "─", "│", "─", " ", "─", "┤", "╯", "─" },
     })
 
@@ -92,7 +82,7 @@ function searchMenu:ShowMenu(target)
       title = "Surveil",
       line = topLeftLine - 4,
       col = topLeftColumn,
-      minwidth = (actualWidth * 2) + 2,
+      minwidth = actualWidth + halfWidth + 2,
       minheight = 1,
       borderchars = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
     })
