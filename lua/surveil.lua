@@ -167,6 +167,8 @@ local function stripData(rawJsonObj)
 
       ---@cast card card
 
+      card.name = card.name:gsub("—", "")
+
       oracleObjects[card.name] = card
     end
   end
@@ -198,7 +200,7 @@ M.updateCards = function()
   local json = tempFile:read()
 
   local jsonObj = vim.json.decode(json, { object = true, array = true })
-  --os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
+  os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
 
   local rawBulkFile = io.open(M.cacheDir .. "/raw_bulk.json", "r")
   if not rawBulkFile then

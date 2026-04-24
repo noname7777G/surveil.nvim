@@ -225,7 +225,6 @@ local translationTable = {
 
 local functionKey = {
   oracle_text = compareText,
-  set = compareText,
   type_line = compareText,
 
   keywords = function(self, oracleObject)

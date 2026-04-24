@@ -7,7 +7,7 @@ local popup = require 'plenary.popup'
 ---@field private cardWinBufnr number? @field private searchWinBufnr number?
 ---@field private searchWindow number?
 ---@field private oldWindow number?
----@field private currentResults table?
+---@field private currentResults card[]?
 ---@field private DisplayResults function
 ---@field public ShowMenu function
 ---@field public CloseMenu function
@@ -114,7 +114,44 @@ function searchMenu:ShowMenu(target)
 
       local cardNames = {}
       for _, card in pairs(searchMenu.currentResults) do
-        table.insert(cardNames, card.name .. " | " .. (card.type_line or "") .. " | " .. (card.mana_cost or ""))
+        local oneThird = math.floor((actualWidth - 2) / 3)
+        local oneSixth = math.max(math.floor((actualWidth - 2) / 6), 15)
+
+        local name = card.name:sub(1, oneThird)
+        local nameLen = #vim.str_utf_pos(name)
+        local nameBufferLen = oneThird - nameLen
+        local nameBufferSpace = string.rep(" ", nameBufferLen)
+
+        local manaCost = ""
+        local manaCostLen = 0
+        if card.mana_cost then
+          manaCost = card.mana_cost:sub(1, oneSixth)
+          manaCostLen = #vim.str_utf_pos(manaCost)
+        end
+        local manaCostBufferLen = oneSixth - manaCostLen
+        local manaCostBufferSpace = string.rep(" ", manaCostBufferLen)
+
+        local typeLine = ""
+        local typeLineLen = 0
+        if card.type_line then
+          typeLine = card.type_line:sub(1, oneThird + (oneThird - oneSixth))
+          typeLineLen = #vim.str_utf_pos(typeLine)
+        end
+        local typeBufferLen = (oneThird + (oneThird - oneSixth)) - typeLineLen
+        local typeBufferSpace = string.rep(" ", typeBufferLen)
+
+
+        local displayLine =
+            name ..
+            nameBufferSpace ..
+            "|" ..
+            typeLine ..
+            typeBufferSpace ..
+            "|" ..
+            manaCostBufferSpace ..
+            manaCost
+
+        table.insert(cardNames, displayLine)
       end
 
       vim.schedule(function()
@@ -146,7 +183,11 @@ function searchMenu:displayHighlightedCard()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   local rowCard
 
-  rowCard = searchMenu.currentResults[row]
+  if searchMenu.currentResults then
+    rowCard = searchMenu.currentResults[row]
+  else
+    return
+  end
 
   if not rowCard then return end
 
@@ -162,6 +203,17 @@ function searchMenu:displayHighlightedCard()
         table.insert(display, s)
       end)
     end
+
+    local pt = nil
+    if rowCard.power and rowCard.toughness then
+      pt = "(" .. rowCard.power .. "/" .. rowCard.toughness .. ")"
+    elseif rowCard.loyalty then
+      pt = "{" .. rowCard.loyalty .. "}"
+    elseif rowCard.defense then
+      pt = "[" .. rowCard.defense .. "]"
+    end
+
+    display[#display + 1] = pt
 
     vim.api.nvim_buf_set_lines(searchMenu.cardWinBufnr, 0, -1, false, display)
   end)
