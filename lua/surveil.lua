@@ -167,7 +167,7 @@ local function stripData(rawJsonObj)
 
       ---@cast card card
 
-      card.name = card.name:gsub("—", "")
+      --card.type_line = card.type_line:gsub("—", "-")
 
       oracleObjects[card.name] = card
     end
