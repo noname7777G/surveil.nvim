@@ -77,8 +77,16 @@ local function stripData(rawJsonObj)
   local oracleObjects = {}
   ---@cast oracleObjects card[]
 
+  local nameMaxLen = 0
+  local longestCardName = ""
+  local typeLineMaxLen = 0
+  local longestTypeLineCardName = ""
+  local manaCostMaxLen = 0
+
   for _, card in ipairs(rawJsonObj) do
-    local oracleObject = oracleObjects[card.name]
+    if card.layout == "reversible_card" then goto continue end
+
+    local oracleObject = oracleObjects[card.oracle_id or card.card_faces[1].oracle_id]
 
     if oracleObject then
       if card.games then
@@ -176,14 +184,30 @@ local function stripData(rawJsonObj)
 
       ---@cast card card
 
+      if nameMaxLen < #card.name then
+        nameMaxLen = #card.name
+        longestCardName = card.name
+      end
+
+      if typeLineMaxLen < #card.type_line then
+        typeLineMaxLen = #card.type_line
+        longestTypeLineCardName = card.name
+      end
+
+      typeLineMaxLen = math.max(#card.type_line, typeLineMaxLen)
+      if card.mana_cost then
+        manaCostMaxLen = math.max(#card.mana_cost, manaCostMaxLen)
+      end
+
       if card.type_line then
         card.type_line = card.type_line:gsub("\226\128\148", "-")
       end
 
       card.nameNoEpithet = card.name:match("^([^,]+),")
 
-      oracleObjects[card.name] = card
+      oracleObjects[card.oracle_id or card.card_faces[1].oracle_id] = card
     end
+    ::continue::
   end
 
   local orderedList = {}
@@ -191,29 +215,37 @@ local function stripData(rawJsonObj)
     table.insert(orderedList, card)
   end
 
+  vim.print(longestCardName .. " is " .. nameMaxLen .. " characters long.")
+  vim.print("The type line of " .. longestTypeLineCardName .. " is " .. typeLineMaxLen .. " characters long.")
+  vim.print(manaCostMaxLen)
+
   return orderedList
 end
 
-M.updateCards = function()
-  local tempFileName = os.tmpname()
+---@param skipDownload boolean?
+M.updateCards = function(skipDownload)
+  if not skipDownload then
+    vim.print("Downloading data!")
+    local tempFileName = os.tmpname()
 
-  local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/default-cards" ..
-    M.curlArgs .. "> " .. tempFileName)
+    local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/default-cards" ..
+      M.curlArgs .. "> " .. tempFileName)
 
-  if not ok then
-    print(str .. code)
-    return
+    if not ok then
+      print(str .. code)
+      return
+    end
+
+    local tempFile = io.open(tempFileName)
+    if tempFile == nil then
+      print "Issue opening temp file"
+      return
+    end
+    local json = tempFile:read()
+
+    local jsonObj = vim.json.decode(json, { object = true, array = true })
+    os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
   end
-
-  local tempFile = io.open(tempFileName)
-  if tempFile == nil then
-    print "Issue opening temp file"
-    return
-  end
-  local json = tempFile:read()
-
-  local jsonObj = vim.json.decode(json, { object = true, array = true })
-  os.execute("curl " .. jsonObj.download_uri .. M.curlArgs .. "-o " .. M.cacheDir .. "/raw_bulk.json")
 
   local rawBulkFile = io.open(M.cacheDir .. "/raw_bulk.json", "r")
   if not rawBulkFile then
@@ -221,9 +253,12 @@ M.updateCards = function()
     return
   end
 
+  vim.print("Parsing JSON!")
+
   local rawJson = rawBulkFile:read("a")
   local rawJsonObj = vim.json.decode(rawJson, { object = true, array = true })
 
+  vim.print("processing data!")
   local oracleObjects = stripData(rawJsonObj)
   local oracleObjectsJson = vim.json.encode(oracleObjects)
 

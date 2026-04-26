@@ -1,10 +1,10 @@
 local surveil = require 'surveil'
 
 vim.api.nvim_create_user_command("SurveilUpdate",
-  function()
-    surveil.updateCards()
+  function(args)
+    surveil.updateCards(args.args[1] or false)
   end,
-  {}
+  { nargs = "?" }
 )
 
 vim.api.nvim_create_user_command("SurveilPicker",
