@@ -157,6 +157,9 @@ local function stripData(rawJsonObj)
       card.watermark = nil
       card.preview = nil
 
+      card.foil = nil
+      card.nonfoil = nil
+
       if card.card_faces then
         for _, face in ipairs(card.card_faces) do
           face.artist = nil
@@ -219,7 +222,6 @@ M.updateCards = function()
   end
 
   local rawJson = rawBulkFile:read("a")
-  vim.print(#rawJson)
   local rawJsonObj = vim.json.decode(rawJson, { object = true, array = true })
 
   local oracleObjects = stripData(rawJsonObj)

@@ -22,6 +22,7 @@ require 'Set'
 ---@field mana_cost string?
 ---@field name string
 ---@field oracle_text string?
+---@field oracle_id string?
 ---@field penny_rank integer?
 ---@field power string?
 ---@field produced_mana Set?
@@ -45,6 +46,7 @@ require 'Set'
 ---@field mana_cost string
 ---@field name string
 ---@field oracle_text string?
+---@field oracle_id string?
 ---@field power string?
 ---@field toughness string?
 ---@field type_line string?

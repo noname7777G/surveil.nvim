@@ -105,9 +105,27 @@ local function generateResultsLines(cards, actualWidth)
   return cardNames
 end
 
+local function makeHighlightGroups()
+  searchMenu.whiteMana = vim.fn.matchadd("WhiteMana", [[{W}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("WhiteMana", [[{W}]], 10, -1, { window = searchMenu.cardWindow })
+  vim.api.nvim_set_hl(0, "WhiteMana", { fg = "Yellow" })
+  searchMenu.whiteMana = vim.fn.matchadd("BlueMana", [[{U}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("BlueMana", [[{U}]], 10, -1, { window = searchMenu.cardWindow })
+  vim.api.nvim_set_hl(0, "BlueMana", { fg = "#35b8c6" })
+  searchMenu.whiteMana = vim.fn.matchadd("BlackMana", [[{B}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("BlackMana", [[{B}]], 10, -1, { window = searchMenu.cardWindow })
+  vim.api.nvim_set_hl(0, "BlackMana", { fg = "Purple" })
+  searchMenu.whiteMana = vim.fn.matchadd("RedMana", [[{R}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("RedMana", [[{R}]], 10, -1, { window = searchMenu.cardWindow })
+  vim.api.nvim_set_hl(0, "RedMana", { fg = "Red" })
+  searchMenu.whiteMana = vim.fn.matchadd("GreenMana", [[{G}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("GreenMana", [[{G}]], 10, -1, { window = searchMenu.cardWindow })
+  vim.api.nvim_set_hl(0, "GreenMana", { fg = "Green" })
+end
+
 function searchMenu:ShowMenu(target)
-  local desiredHeight = 40
-  local desiredWidth = 80
+  local desiredHeight = 30
+  local desiredWidth = 100
 
   local screenHeight = vim.go.lines
   local screenWidth = vim.go.columns
@@ -136,7 +154,8 @@ function searchMenu:ShowMenu(target)
         searchMenu.windowParts.topTee,
         searchMenu.windowParts.bottomTee,
         searchMenu.windowParts.bottomLeft },
-    })
+    }
+  )
 
   searchMenu.cardWindow = popup.create(searchMenu.opts,
     {
@@ -144,7 +163,7 @@ function searchMenu:ShowMenu(target)
       line = windowTopLeftLine + 3,
       col = windowTopLeftColumn + actualWidth + 2,
       minwidth = halfWidth,
-      minheight = halfWidth,
+      minheight = actualHeight,
       borderchars = { searchMenu.windowParts.horizontalBar,
         searchMenu.windowParts.verticalBar,
         searchMenu.windowParts.horizontalBar,
@@ -153,7 +172,8 @@ function searchMenu:ShowMenu(target)
         searchMenu.windowParts.rightTee,
         searchMenu.windowParts.bottomRight,
         searchMenu.windowParts.horizontalBar },
-    })
+    }
+  )
 
   searchMenu.searchWindow = popup.create(searchMenu.opts,
     {
@@ -170,13 +190,15 @@ function searchMenu:ShowMenu(target)
         searchMenu.windowParts.topRight,
         searchMenu.windowParts.verticalBar,
         searchMenu.windowParts.verticalBar },
-    })
+    }
+  )
+
+  makeHighlightGroups()
 
   searchMenu.resultWinBufnr = vim.api.nvim_win_get_buf(searchMenu.resultsWindow)
   searchMenu.cardWinBufnr = vim.api.nvim_win_get_buf(searchMenu.cardWindow)
   searchMenu.searchWinBufnr = vim.api.nvim_win_get_buf(searchMenu.searchWindow)
   searchMenu.querySession.setPrimaryTable(target)
-
 
   vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false,
     generateResultsLines(target, actualWidth))

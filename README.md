@@ -44,6 +44,7 @@ I advise you to run this after each update, just in case card fields were added.
 
 ## Opts
 `opts.cacheDir` defaults to `~/.cache/`.
+
 `opts.defaultQuery` runs this when loading all cards. 
 I recommend setting to "game:paper f:vintage" to filter out tokens and memorabilia.
 
