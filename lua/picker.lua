@@ -11,8 +11,23 @@ local popup = require 'plenary.popup'
 ---@field private DisplayResults function
 ---@field public ShowMenu function
 ---@field public CloseMenu function
+---@field public windowParts table
 ---@field opts table
 local searchMenu = {}
+
+searchMenu.windowParts = {
+  verticalBar = "│",
+  horizontalBar = "─",
+  noBar = " ",
+  leftTee = "├",
+  topTee = "┬",
+  bottomTee = "┴",
+  rightTee = "┤",
+  bottomLeft = "╰",
+  bottomRight = "╯",
+  topLeft = "╭",
+  topRight = "╮",
+}
 
 searchMenu.querySession = require 'query'
 
@@ -41,6 +56,55 @@ function searchMenu.moveCursorDown()
   searchMenu:displayHighlightedCard()
 end
 
+---@param cards card[]
+---@param actualWidth integer
+---@return string[]
+local function generateResultsLines(cards, actualWidth)
+  local cardNames = {}
+  for _, card in pairs(cards) do
+    local oneThird = math.floor((actualWidth - 2) / 3)
+    local oneSixth = math.max(math.floor((actualWidth - 2) / 6), 15)
+
+    local name = card.name:sub(1, oneThird)
+    local nameLen = #vim.str_utf_pos(name)
+    local nameBufferLen = oneThird - nameLen
+    local nameBufferSpace = string.rep(" ", nameBufferLen)
+
+    local manaCost = ""
+    local manaCostLen = 0
+    if card.mana_cost then
+      manaCost = card.mana_cost:sub(1, oneSixth)
+      manaCostLen = #vim.str_utf_pos(manaCost)
+    end
+    local manaCostBufferLen = oneSixth - manaCostLen
+    local manaCostBufferSpace = string.rep(" ", manaCostBufferLen)
+
+    local typeLine = ""
+    local typeLineLen = 0
+    if card.type_line then
+      typeLine = card.type_line:sub(1, oneThird + (oneThird - oneSixth))
+      typeLineLen = #vim.str_utf_pos(typeLine)
+    end
+    local typeBufferLen = (oneThird + (oneThird - oneSixth)) - typeLineLen
+    local typeBufferSpace = string.rep(" ", typeBufferLen)
+
+
+    local displayLine =
+        name ..
+        nameBufferSpace ..
+        "|" ..
+        typeLine ..
+        typeBufferSpace ..
+        "|" ..
+        manaCostBufferSpace ..
+        manaCost
+
+    table.insert(cardNames, displayLine)
+  end
+
+  return cardNames
+end
+
 function searchMenu:ShowMenu(target)
   local desiredHeight = 40
   local desiredWidth = 80
@@ -52,45 +116,70 @@ function searchMenu:ShowMenu(target)
   local actualWidth = math.min(desiredWidth, screenWidth - 10)
   local halfWidth = math.floor(actualWidth / 2)
 
-  local topLeftLine = math.floor((screenHeight - actualHeight) / 2)
-  local topLeftColumn = math.floor((screenWidth - actualWidth) / 3)
+  local windowTopLeftLine = math.floor(screenHeight / 2) - math.floor(actualHeight / 2)
+  local windowTopLeftColumn = math.floor(screenWidth / 2) - math.floor(actualWidth / 2) - math.floor(halfWidth / 2)
 
   searchMenu.oldWindow = vim.api.nvim_win_get_buf(0)
 
   searchMenu.resultsWindow = popup.create(searchMenu.opts,
     {
       title = "Results",
-      line = topLeftLine - 1,
-      col = topLeftColumn,
+      line = windowTopLeftLine + 3,
+      col = windowTopLeftColumn,
       minwidth = actualWidth,
       minheight = actualHeight,
-      borderchars = { "─", "│", "─", "│", "├", "┬	", "┴", "╰" },
+      borderchars = { searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.leftTee,
+        searchMenu.windowParts.topTee,
+        searchMenu.windowParts.bottomTee,
+        searchMenu.windowParts.bottomLeft },
     })
 
   searchMenu.cardWindow = popup.create(searchMenu.opts,
     {
       title = "Card",
-      line = topLeftLine - 1,
-      col = topLeftColumn + actualWidth + 2,
+      line = windowTopLeftLine + 3,
+      col = windowTopLeftColumn + actualWidth + 2,
       minwidth = halfWidth,
       minheight = halfWidth,
-      borderchars = { "─", "│", "─", " ", "─", "┤", "╯", "─" },
+      borderchars = { searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.noBar,
+        searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.rightTee,
+        searchMenu.windowParts.bottomRight,
+        searchMenu.windowParts.horizontalBar },
     })
 
   searchMenu.searchWindow = popup.create(searchMenu.opts,
     {
       title = "Surveil",
-      line = topLeftLine - 4,
-      col = topLeftColumn,
+      line = windowTopLeftLine,
+      col = windowTopLeftColumn,
       minwidth = actualWidth + halfWidth + 2,
       minheight = 1,
-      borderchars = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
+      borderchars = { searchMenu.windowParts.horizontalBar,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.noBar,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.topLeft,
+        searchMenu.windowParts.topRight,
+        searchMenu.windowParts.verticalBar,
+        searchMenu.windowParts.verticalBar },
     })
 
   searchMenu.resultWinBufnr = vim.api.nvim_win_get_buf(searchMenu.resultsWindow)
   searchMenu.cardWinBufnr = vim.api.nvim_win_get_buf(searchMenu.cardWindow)
   searchMenu.searchWinBufnr = vim.api.nvim_win_get_buf(searchMenu.searchWindow)
   searchMenu.querySession.setPrimaryTable(target)
+
+
+  vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false,
+    generateResultsLines(target, actualWidth))
 
   vim.api.nvim_buf_attach(searchMenu.searchWinBufnr, true, {
     on_lines = function(_, BufNum, _, firstLine, lastLine)
@@ -102,47 +191,7 @@ function searchMenu:ShowMenu(target)
         vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, {})
       end)
 
-      local cardNames = {}
-      for _, card in pairs(searchMenu.currentResults) do
-        local oneThird = math.floor((actualWidth - 2) / 3)
-        local oneSixth = math.max(math.floor((actualWidth - 2) / 6), 15)
-
-        local name = card.name:sub(1, oneThird)
-        local nameLen = #vim.str_utf_pos(name)
-        local nameBufferLen = oneThird - nameLen
-        local nameBufferSpace = string.rep(" ", nameBufferLen)
-
-        local manaCost = ""
-        local manaCostLen = 0
-        if card.mana_cost then
-          manaCost = card.mana_cost:sub(1, oneSixth)
-          manaCostLen = #vim.str_utf_pos(manaCost)
-        end
-        local manaCostBufferLen = oneSixth - manaCostLen
-        local manaCostBufferSpace = string.rep(" ", manaCostBufferLen)
-
-        local typeLine = ""
-        local typeLineLen = 0
-        if card.type_line then
-          typeLine = card.type_line:sub(1, oneThird + (oneThird - oneSixth))
-          typeLineLen = #vim.str_utf_pos(typeLine)
-        end
-        local typeBufferLen = (oneThird + (oneThird - oneSixth)) - typeLineLen
-        local typeBufferSpace = string.rep(" ", typeBufferLen)
-
-
-        local displayLine =
-            name ..
-            nameBufferSpace ..
-            "|" ..
-            typeLine ..
-            typeBufferSpace ..
-            "|" ..
-            manaCostBufferSpace ..
-            manaCost
-
-        table.insert(cardNames, displayLine)
-      end
+      local cardNames = generateResultsLines(searchMenu.currentResults, actualWidth)
 
       vim.schedule(function()
         vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, cardNames)

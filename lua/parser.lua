@@ -143,7 +143,7 @@ local colorNames = {
   aggression = { "B", "R", "G", "W" },
   altruism = { "G", "W", "U", "R" },
   growth = { "G", "W", "U", "B" },
-  artiface = { "W", "U", "B", "R" },
+  artifice = { "W", "U", "B", "R" },
 
   c = {},
   colorless = {},

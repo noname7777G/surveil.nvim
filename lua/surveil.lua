@@ -204,7 +204,7 @@ M.updateCards = function()
 
   local tempFile = io.open(tempFileName)
   if tempFile == nil then
-    print "Issue opening temp file (surveil.lua line 75)"
+    print "Issue opening temp file"
     return
   end
   local json = tempFile:read()
@@ -248,7 +248,9 @@ M.loadCards = function()
     }, function(input)
       if input == "y" or input == "Y" then
         M.updateCards()
+
         bulkDataFile = io.open(M.bulkDataPath)
+
         if bulkDataFile then
           local bulkDataJson = bulkDataFile:read("a")
           M.allCards = vim.json.decode(bulkDataJson, { object = true, array = true })
