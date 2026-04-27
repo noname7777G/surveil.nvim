@@ -184,6 +184,10 @@ local function stripData(rawJsonObj)
 
       ---@cast card card
 
+      if card.type_line then
+        card.type_line = card.type_line:gsub("\226\128\148", "-")
+      end
+
       if nameMaxLen < #card.name then
         nameMaxLen = #card.name
         longestCardName = card.name
@@ -199,9 +203,6 @@ local function stripData(rawJsonObj)
         manaCostMaxLen = math.max(#card.mana_cost, manaCostMaxLen)
       end
 
-      if card.type_line then
-        card.type_line = card.type_line:gsub("\226\128\148", "-")
-      end
 
       card.nameNoEpithet = card.name:match("^([^,]+),")
 
@@ -222,9 +223,9 @@ local function stripData(rawJsonObj)
   return orderedList
 end
 
----@param skipDownload boolean?
+---@param skipDownload string?
 M.updateCards = function(skipDownload)
-  if not skipDownload then
+  if skipDownload ~= "skipDownload" then
     vim.print("Downloading data!")
     local tempFileName = os.tmpname()
 

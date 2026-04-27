@@ -2,9 +2,15 @@ local surveil = require 'surveil'
 
 vim.api.nvim_create_user_command("SurveilUpdate",
   function(args)
-    surveil.updateCards(args.args[1] or false)
+    surveil.updateCards(args.args)
   end,
-  { nargs = "?" }
+  {
+    nargs = "?",
+    complete = function(_, _, _)
+      return { "skipDownload" }
+    end,
+    desc = "Download data from Scryfall and format it"
+  }
 )
 
 vim.api.nvim_create_user_command("SurveilPicker",
