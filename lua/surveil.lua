@@ -216,9 +216,9 @@ local function stripData(rawJsonObj)
     table.insert(orderedList, card)
   end
 
-  vim.print(longestCardName .. " is " .. nameMaxLen .. " characters long.")
-  vim.print("The type line of " .. longestTypeLineCardName .. " is " .. typeLineMaxLen .. " characters long.")
-  vim.print(manaCostMaxLen)
+  --vim.print(longestCardName .. " is " .. nameMaxLen .. " characters long.")
+  --vim.print("The type line of " .. longestTypeLineCardName .. " is " .. typeLineMaxLen .. " characters long.")
+  --vim.print(manaCostMaxLen)
 
   return orderedList
 end
@@ -226,7 +226,6 @@ end
 ---@param skipDownload string?
 M.updateCards = function(skipDownload)
   if skipDownload ~= "skipDownload" then
-    vim.print("Downloading data!")
     local tempFileName = os.tmpname()
 
     local ok, str, code = os.execute("curl https://api.scryfall.com/bulk-data/default-cards" ..
@@ -254,12 +253,9 @@ M.updateCards = function(skipDownload)
     return
   end
 
-  vim.print("Parsing JSON!")
-
   local rawJson = rawBulkFile:read("a")
   local rawJsonObj = vim.json.decode(rawJson, { object = true, array = true })
 
-  vim.print("processing data!")
   local oracleObjects = stripData(rawJsonObj)
   local oracleObjectsJson = vim.json.encode(oracleObjects)
 
@@ -270,6 +266,7 @@ M.updateCards = function(skipDownload)
   end
 
   bulkFile:write(oracleObjectsJson)
+  io.close(bulkFile)
 end
 
 
