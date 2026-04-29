@@ -2,6 +2,8 @@
 
 Offline search for Magic, the Gathering(TM) cards.
 Uses card data provided by Scryfall's bulk data API.
+Aims to be print-agnostic; all print-specific fields are either removed to save memory/time or are collated into a list.
+eg, `set` is now `sets`, a list of every set the card has been printed in.
 
 ## Implemented fields and features
 - simple card name search
@@ -10,7 +12,7 @@ Uses card data provided by Scryfall's bulk data API.
 - t/type
 - c/color
 - id/identity
-- mv/manavalue
+- mv/manavalue (no odd/even yet)
 - game
 - f/format
 - pow/power
@@ -51,28 +53,34 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
-- manacost field
-- devotion field
-- produces field
-- mv/manavalue odd/even
-- pt/powtou field
-- grouping and logical `or`.
-- completion based on Scryfall catalogs
 - proper support for DFCs
     - fixing this will also fix defense
+- remove or eat Plenary dependancy
+- `manacost`
+- `devotion`
+- `produces`
+- `mv`/`manavalue` odd/even
+- `pt`/`powtou`
+- grouping and logical `or`.
+- completion based on Scryfall catalogs
 - rulings
 - mana-moji?
-- make o/oracle not search reminder text
-- fo/fulloracle field
-- sort field
-- support for diacritics and other non-ASCII characters
+- make `o`/`oracle` not search reminder text
+- `fo`/`fulloracle`
+- `sort`
+- proper support for diacritics and other non-ASCII characters
+- `artist`
+    - will return all cards an artist has had their art on.
+- `function`/`otag`
+    - on hold; I have been told there are plans to include oracle and art tag data in the bulk data files.
+- `is`
+    - this will be implemented slowly over time, complete parity with Scryfall is unlikely
+- `face` field
+    - options will be 'front', 'back', 'strict_back', and 'both'
 
 ## The following fields are not planned for implementation:
-- function
-    - tagger data is not released in bulk.
-- all art related fields
+- all art related fields except for `artist`
     - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
-- is
 - cn/number
 - b/block
 - s/set

@@ -77,14 +77,17 @@ local function stripData(rawJsonObj)
   local oracleObjects = {}
   ---@cast oracleObjects card[]
 
+  local cardCount = 0
   local nameMaxLen = 0
+  local nameTotalLen = 0
+  local nameLengths = {}
   local longestCardName = ""
   local typeLineMaxLen = 0
   local longestTypeLineCardName = ""
   local manaCostMaxLen = 0
 
   for _, card in ipairs(rawJsonObj) do
-    if card.layout == "reversible_card" then goto continue end
+    if card.layout == "reversible_card" then goto continue end -- This is a temp solution, I want these printings included in the "in" and "artist" fields.
 
     local oracleObject = oracleObjects[card.oracle_id or card.card_faces[1].oracle_id]
 
@@ -93,6 +96,10 @@ local function stripData(rawJsonObj)
         for _, game in ipairs(card.games) do
           oracleObject.availabilities[game] = true
         end
+      end
+
+      if card.oracle_text and #card.oracle_text > #oracleObject.oracle_text then --ensure we have the most reminder text
+        oracleObject.oracle_text = card.oracle_text
       end
 
       oracleObject.sets[#oracleObject.sets + 1] = card.set
@@ -188,6 +195,11 @@ local function stripData(rawJsonObj)
         card.type_line = card.type_line:gsub("\226\128\148", "-")
       end
 
+      cardCount = cardCount + 1
+      nameTotalLen = nameTotalLen + #card.name
+
+      nameLengths[#nameLengths + 1] = #card.name
+
       if nameMaxLen < #card.name then
         nameMaxLen = #card.name
         longestCardName = card.name
@@ -210,6 +222,9 @@ local function stripData(rawJsonObj)
     end
     ::continue::
   end
+  vim.print("The average card name length is " .. (nameTotalLen / cardCount) .. " bytes.")
+  table.sort(nameLengths)
+  vim.print("The median card name length is " .. nameLengths[math.ceil(#nameLengths / 20) * 19] .. " bytes.")
 
   local orderedList = {}
   for _, card in pairs(oracleObjects) do

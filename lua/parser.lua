@@ -333,7 +333,7 @@ return vim.re.compile([[
 
   namePart <- (value space !operation)
 
-  operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space|} -> attachFunction
+  operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space |} -> attachFunction
 
   operation <- (":" / "=" / "<=" / ">=" / "<" / ">")
 

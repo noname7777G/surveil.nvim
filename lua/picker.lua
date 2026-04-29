@@ -13,6 +13,7 @@ local popup = require 'plenary.popup'
 ---@field public CloseMenu function
 ---@field public windowParts table
 ---@field opts table
+---@field private selectedCard card
 local searchMenu = {}
 
 searchMenu.windowParts = {
@@ -42,6 +43,14 @@ function searchMenu.moveCursorUp()
     vim.api.nvim_win_set_cursor(0, pos)
   end
 
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local rowCard
+
+  if searchMenu.currentResults then
+    rowCard = searchMenu.currentResults[row]
+  end
+
+  searchMenu.selectedCard = rowCard
   searchMenu:displayHighlightedCard()
 end
 
@@ -52,6 +61,15 @@ function searchMenu.moveCursorDown()
     pos[1] = pos[1] + 1
     vim.api.nvim_win_set_cursor(0, pos)
   end
+
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local rowCard
+
+  if searchMenu.currentResults then
+    rowCard = searchMenu.currentResults[row]
+  end
+
+  searchMenu.selectedCard = rowCard
 
   searchMenu:displayHighlightedCard()
 end
@@ -136,6 +154,10 @@ local function makeHighlightGroups()
   searchMenu.whiteMana = vim.fn.matchadd("ColorlessMana", [[{[Cc]}]], 10, -1, { window = searchMenu.cardWindow })
   searchMenu.whiteMana = vim.fn.matchadd("ColorlessMana", [[{[Cc]}]], 10, -1, { window = searchMenu.searchWindow })
   vim.api.nvim_set_hl(0, "ColorlessMana", { bg = "#d0c8c5", fg = "Black" })
+  searchMenu.whiteMana = vim.fn.matchadd("XMana", [[{[Xx]}]], 10, -1, { window = searchMenu.resultsWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("XMana", [[{[Xx]}]], 10, -1, { window = searchMenu.cardWindow })
+  searchMenu.whiteMana = vim.fn.matchadd("XMana", [[{[Xx]}]], 10, -1, { window = searchMenu.searchWindow })
+  vim.api.nvim_set_hl(0, "XMAna", { bg = "#d0c8c5", fg = "Black" })
 end
 
 function searchMenu:ShowMenu(target)
@@ -217,6 +239,7 @@ function searchMenu:ShowMenu(target)
 
   vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false,
     generateResultsLines(target, actualWidth))
+  searchMenu.currentResults = target
 
   vim.api.nvim_buf_attach(searchMenu.searchWinBufnr, true, {
     on_lines = function(_, BufNum, _, firstLine, lastLine)
@@ -244,6 +267,10 @@ function searchMenu:ShowMenu(target)
   vim.keymap.set('n', 'k', searchMenu.moveCursorUp, { buffer = searchMenu.resultWinBufnr })
   vim.keymap.set('n', 'j', searchMenu.moveCursorDown, { buffer = searchMenu.resultWinBufnr })
 
+  vim.keymap.set('n', '<leader>sp', function()
+    vim.print(searchMenu.selectedCard)
+  end, { buffer = searchMenu.resultWinBufnr })
+
   vim.wo[searchMenu.searchWindow].wrap = false
   vim.wo[searchMenu.resultsWindow].wrap = false
   vim.wo[searchMenu.cardWindow].wrap = true
@@ -252,41 +279,33 @@ end
 
 function searchMenu.moveToResults()
   vim.api.nvim_set_current_win(searchMenu.resultsWindow)
+  searchMenu.selectedCard = searchMenu.currentResults[1]
   searchMenu:displayHighlightedCard()
 end
 
 function searchMenu:displayHighlightedCard()
-  local row = vim.api.nvim_win_get_cursor(0)[1]
-  local rowCard
-
-  if searchMenu.currentResults then
-    rowCard = searchMenu.currentResults[row]
-  else
-    return
-  end
-
-  if not rowCard then return end
+  if not searchMenu.selectedCard then return end
 
   vim.schedule(function()
     local display = {
-      rowCard.name,
-      (rowCard.mana_cost or ""),
-      (rowCard.type_line or ""),
+      searchMenu.selectedCard.name,
+      (searchMenu.selectedCard.mana_cost or ""),
+      (searchMenu.selectedCard.type_line or ""),
     }
 
-    if rowCard.oracle_text then
-      rowCard.oracle_text:gsub("([^\n]*)\n*", function(s)
+    if searchMenu.selectedCard.oracle_text then
+      searchMenu.selectedCard.oracle_text:gsub("([^\n]*)\n*", function(s)
         table.insert(display, s)
       end)
     end
 
     local pt = nil
-    if rowCard.power and rowCard.toughness then
-      pt = "(" .. rowCard.power .. "/" .. rowCard.toughness .. ")"
-    elseif rowCard.loyalty then
-      pt = "{" .. rowCard.loyalty .. "}"
-    elseif rowCard.defense then
-      pt = "[" .. rowCard.defense .. "]"
+    if searchMenu.selectedCard.power and searchMenu.selectedCard.toughness then
+      pt = "(" .. searchMenu.selectedCard.power .. "/" .. searchMenu.selectedCard.toughness .. ")"
+    elseif searchMenu.selectedCard.loyalty then
+      pt = "{" .. searchMenu.selectedCard.loyalty .. "}"
+    elseif searchMenu.selectedCard.defense then
+      pt = "[" .. searchMenu.selectedCard.defense .. "]"
     end
 
     display[#display + 1] = pt
