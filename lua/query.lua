@@ -24,20 +24,22 @@ M.queryTable = function(list, query)
   for _, oracleObject in pairs(list) do
     local addObject = false
 
-    for _, qObject in pairs(parsedQuery) do
-      if type(qObject) == 'string' then
-        if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
-          addObject = false
-          break
+    for _, branch in pairs(parsedQuery) do
+      for _, qObject in pairs(branch) do
+        if type(qObject) == 'string' then
+          if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
+            addObject = false
+            break
+          end
+        elseif type(qObject) == "table" then
+          if not qObject:compare(oracleObject) then
+            addObject = false
+            break
+          end
         end
-      elseif type(qObject) == "table" then
-        if not qObject:compare(oracleObject) then
-          addObject = false
-          break
-        end
-      end
 
-      addObject = true
+        addObject = true
+      end
     end
 
     if addObject then
@@ -55,29 +57,31 @@ M.query = function(query)
   if not query or query == "" then return M.primaryTable end
 
   local parsedQuery = parser:match(query)
+  if not parsedQuery then return M.primaryTable end
   local results = {}
 
   for _, oracleObject in pairs(M.primaryTable) do
     local addObject = false
+    for _, branch in pairs(parsedQuery) do
+      for _, qObject in pairs(branch) do
+        if type(qObject) == 'string' then
+          if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
+            addObject = false
+            break
+          end
+        elseif type(qObject) == "table" then
+          if not qObject:compare(oracleObject) then
+            addObject = false
+            break
+          end
+        end
 
-    for _, qObject in pairs(parsedQuery) do
-      if type(qObject) == 'string' then
-        if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
-          addObject = false
-          break
-        end
-      elseif type(qObject) == "table" then
-        if not qObject:compare(oracleObject) then
-          addObject = false
-          break
-        end
+        addObject = true
       end
 
-      addObject = true
-    end
-
-    if addObject then
-      table.insert(results, oracleObject)
+      if addObject then
+        table.insert(results, oracleObject)
+      end
     end
   end
 

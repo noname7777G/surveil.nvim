@@ -1,5 +1,26 @@
-local surveil = require 'surveil'
+local parser = require 'parser'
 
-local card_a = surveil.query([["birds of paradise"]], true)
+local query = parser:match("foo bar or foo baz or lightning")
 
-vim.print(card_a)
+vim.print(query)
+
+query = parser:match("foo bar")
+
+vim.print(query)
+
+query = parser:match("for or or bar")
+
+
+vim.print(query)
+
+query = parser:match("t:dwarf or kw:changeling")
+
+vim.print(query)
+
+query = parser:match("f")
+
+vim.print(query)
+
+query = parser:match("")
+
+vim.print(query)

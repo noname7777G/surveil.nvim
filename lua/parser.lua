@@ -251,7 +251,7 @@ local translationTable = {
   game = "availabilities",
 }
 
-translationTable["in"] = "sets"
+translationTable["in"] = "sets" --"in" is a lua keyword and must be added to the table this way.
 
 local functionKey = {
   oracle_text = compareText,
@@ -328,17 +328,21 @@ local deps = {
   inverted = inverted,
 }
 
+--parenthetical <- {| "(" (branch / subQuery / (parenthetical)*) ")" |}
 return vim.re.compile([[
-  subQuery <- {| (namePart / operationPair)* |}
+  query <- {| queryBranchBody (or queryBranchBody)* |}
+  queryBranchBody <- (!or queryPart)+ -> {}
+  or <- ("or" space)+
 
-  namePart <- (value space !operation)
+  queryPart <- (namePart / operationPair)
+  namePart <- value space !operation
 
   operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space |} -> attachFunction
 
-  operation <- (":" / "=" / "<=" / ">=" / "<" / ">")
+  operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
 
   value <- {word} / quote
   quote <- '"' {~ ((word space)* / '""' -> '"') ~} '"'
-  word <- [_%w-~.][_%w-~.]*
+  word <- [_%w-~.]+
   space <- %s*
 ]], deps)
