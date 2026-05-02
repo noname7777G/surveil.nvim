@@ -10,23 +10,16 @@ local set = require 'Set'
 local compareNumber = function(self, oracleObject)
   local oracleObjectValue = utils.evaluatePT(oracleObject[self.field])
 
-  local result
   if self.operation == "=" or self.operation == ":" then
-    result = oracleObjectValue == self.value
+    return oracleObjectValue == self.value
   elseif self.operation == "<=" then
-    result = oracleObjectValue <= self.value
+    return oracleObjectValue <= self.value
   elseif self.operation == ">=" then
-    result = oracleObjectValue >= self.value
+    return oracleObjectValue >= self.value
   elseif self.operation == "<" then
-    result = oracleObjectValue < self.value
+    return oracleObjectValue < self.value
   elseif self.operation == ">" then
-    result = oracleObjectValue > self.value
-  end
-
-  if self.inverted then
-    return not result
-  else
-    return result
+    return oracleObjectValue > self.value
   end
 end
 
@@ -56,41 +49,32 @@ local compareText = function(self, oracleObject)
 
   local fieldValue = oracleObject[self.field]:lower()
 
-  local result
-
   if self.operation == "=" then
-    result = fieldValue == queryValue
+    return fieldValue == queryValue
   elseif self.operation == ":" then
     if type(queryValue) == "string" and queryValue:find("~", 1, true) then
       local expandedQueryValue = queryValue:gsub("~", oracleObject.nameNoEpithet or oracleObject.name)
 
       if fieldValue:find(expandedQueryValue, 1, true) then
-        result = true
+        return true
       else
         for _, v in ipairs(tidleExpansions) do
           expandedQueryValue = queryValue:gsub("~", v)
 
           if fieldValue:lower():find(expandedQueryValue, 1, true) then
-            result = true
-            break
+            return true
           end
         end
       end
     else
-      result = fieldValue:find(queryValue, 1, true)
+      return fieldValue:find(queryValue, 1, true)
     end
   elseif self.operation == "<=" or self.operation == "<" then
     return true
   elseif self.operation == ">=" then
-    result = fieldValue:find(queryValue, 1, true)
+    return fieldValue:find(queryValue, 1, true)
   elseif self.operation == ">" then
-    result = fieldValue ~= queryValue and fieldValue:find(queryValue, 1, true)
-  end
-
-  if self.inverted then
-    return not result
-  else
-    return result
+    return fieldValue ~= queryValue and fieldValue:find(queryValue, 1, true)
   end
 end
 
@@ -149,53 +133,76 @@ local colorNames = {
   colorless = {},
 }
 
-local compareColors = function(self, oracleObject)
-  local operation = self.operation
-  local field = self.field
-  local value = self.value
+local _compareColors = {
+  colors = {},
+  color_identity = {}
+}
 
-  local oracleObjectColors = oracleObject[field]
+_compareColors.colors["="] = function(self, oracleObject)
+  return (self.value.symmetric_difference(oracleObject.colors).size == 0)
+end
 
-  local result
+_compareColors.color_identity["="] = function(self, oracleObject)
+  return (self.value.symmetric_difference(oracleObject.color_identity).size == 0)
+end
 
-  if operation == "=" then
-    result = value.symmetric_difference(oracleObjectColors).size == 0
-  elseif operation == ":" then
-    if field == "colors" then
-      if value.size == 0 then
-        result = oracleObjectColors.size == 0
-      else
-        if oracleObjectColors then
-          result = value.is_superset(oracleObjectColors)
-        else
-          result = false
-        end
-      end
-    else --self.field == "color_identity"
-      result = oracleObjectColors.is_superset(value)
-    end
-  elseif operation == "<=" then
-    result = value.is_superset(oracleObjectColors)
-  elseif operation == ">=" then
-    result = oracleObjectColors.is_superset(value)
-  elseif operation == "<" then
-    if value.symmetric_difference(oracleObjectColors).size > 0 then
-      result = oracleObjectColors.is_superset(value)
-    else
-      result = false
-    end
-  else --operation == ">"
-    if value.symmetric_difference(oracleObjectColors).size > 0 then
-      result = value.is_superset(oracleObjectColors)
-    else
-      result = false
-    end
-  end
-
-  if self.inverted then
-    return not result
+_compareColors.colors[":"] = function(self, oracleObject)
+  if self.value.size == 0 then
+    return oracleObject.colors.size == 0
   else
-    return result
+    return self.value.is_superset(oracleObject.colors)
+  end
+end
+
+_compareColors.color_identity[":"] = function(self, oracleObject)
+  return (oracleObject.color_identity.is_superset(self.value))
+end
+
+_compareColors.colors[">="] = function(self, oracleObject)
+  return (self.value.is_superset(oracleObject.colors))
+end
+
+_compareColors.color_identity[">="] = function(self, oracleObject)
+  return (self.value.is_superset(oracleObject.color_identity))
+end
+
+_compareColors.colors["<="] = function(self, oracleObject)
+  return (oracleObject.colors.is_superset(self.value))
+end
+
+_compareColors.color_identity["<="] = function(self, oracleObject)
+  return (oracleObject.color_identity.is_superset(self.value))
+end
+
+_compareColors.colors["<"] = function(self, oracleObject)
+  if self.value.symmetric_difference(oracleObject.colors).size > 0 then
+    return oracleObject.colors.is_superset(self.value)
+  else
+    return false
+  end
+end
+
+_compareColors.color_identity["<"] = function(self, oracleObject)
+  if self.value.symmetric_difference(oracleObject.color_identity).size > 0 then
+    return oracleObject.color_identity.is_superset(self.value)
+  else
+    return false
+  end
+end
+
+_compareColors.colors[">"] = function(self, oracleObject)
+  if self.value.symmetric_difference(oracleObject.colors).size > 0 then
+    return self.value.is_superset(oracleObject.colors)
+  else
+    return false
+  end
+end
+
+_compareColors.color_identity[">"] = function(self, oracleObject)
+  if self.value.symmetric_difference(oracleObject.color_identity).size > 0 then
+    return self.value.is_superset(oracleObject.color_identity)
+  else
+    return false
   end
 end
 
@@ -260,10 +267,10 @@ local functionKey = {
   keywords = function(self, oracleObject)
     for _, v in pairs(oracleObject[self.field]) do
       if v:upper() == self.value:upper() then
-        return true ~= self.inverted
+        return true
       end
     end
-    return false ~= self.inverted
+    return false
   end,
 
   availabilities = function(self, oracleObject)
@@ -272,16 +279,16 @@ local functionKey = {
 
   sets = function(self, oracleObject)
     for _, v in ipairs(oracleObject.sets) do
-      if v:upper() == self.value:upper() then
-        return true ~= self.inverted
+      if v == self.value:lower() then
+        return true
       end
     end
-    return false ~= self.inverted
+    return false
   end,
 
   legalities = function(self, oracleObject)
-    local v = oracleObject["legalities"][self.value]
-    return (v == "legal" or v == "restricted") ~= self.inverted
+    local v = oracleObject.legalities[self.value]
+    return (v == "legal" or v == "restricted")
   end,
 
   mana_cost = compareManaCost,
@@ -312,7 +319,7 @@ local attachFunction = function(t)
   if t.field == "colors" or t.field == "color_identity" then
     if type(t.value) == "string" then
       t.value = set(colorNames[string.lower(t.value or "")] or colorsToTable(t.value) or {})
-      t.compare = compareColors
+      t.compare = _compareColors[t.field][t.operation]
     else
       t.compare = compareColorCount
     end
@@ -328,7 +335,6 @@ local deps = {
   inverted = inverted,
 }
 
---parenthetical <- {| "(" (branch / subQuery / (parenthetical)*) ")" |}
 return vim.re.compile([[
   query <- {| branch (or branch)* |}
 
@@ -337,7 +343,7 @@ return vim.re.compile([[
   branch <- (!or queryPart)+ -> {}
   or <- ("or" space)+
 
-  queryPart <- (namePart / operationPair)
+  queryPart <- space (namePart / operationPair)
   namePart <- value space !operation
 
   operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space |} -> attachFunction

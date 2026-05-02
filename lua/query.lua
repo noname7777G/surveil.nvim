@@ -32,7 +32,7 @@ M.queryTable = function(list, query)
             break
           end
         elseif type(qObject) == "table" then
-          if not qObject:compare(oracleObject) then
+          if not qObject:compare(oracleObject) ~= qObject.inverted then
             addObject = false
             break
           end
@@ -70,7 +70,7 @@ M.query = function(query)
             break
           end
         elseif type(qObject) == "table" then
-          if not qObject:compare(oracleObject) then
+          if not qObject:compare(oracleObject) ~= qObject.inverted then
             addObject = false
             break
           end
