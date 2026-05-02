@@ -89,7 +89,7 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
     - returns cards that synergizes with, tutor for, can be found with, or are combo pieces with the named card.
 
 ## The following fields are not planned for implementation:
-- all print specific fields except for `artist` and `set`
+- all print specific fields except for `artist`
     - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
 - cn/number
 - b/block
