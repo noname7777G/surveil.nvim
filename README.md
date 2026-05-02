@@ -20,6 +20,7 @@ eg, `set` is now `sets`, a list of every set the card has been printed in.
 - loy/loyalty
 - in
 - ~ substitution
+- logical `or`
 
 ## Depends on:
 - plenary.nvim
@@ -53,33 +54,42 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 `opts.sortPredicate` partially implement. The only field with explicit support is "edhrec_rank".
 
 # TODO:
+## Priority
+- grouping with `()`
 - proper support for DFCs
-    - fixing this will also fix defense
-- remove or eat Plenary dependancy
+- Fix reversible cards
 - `manacost`
 - `devotion`
 - `produces`
 - `mv`/`manavalue` odd/even
 - `pt`/`powtou`
-- grouping and logical `or`.
 - completion based on Scryfall catalogs
 - rulings
-- mana-moji?
 - make `o`/`oracle` not search reminder text
 - `fo`/`fulloracle`
-- `sort`
 - proper support for diacritics and other non-ASCII characters
-- `artist`
-    - will return all cards an artist has had their art on.
+
+## Eventually
+- `sort`
+- remove or eat Plenary dependency
+- optimize comparison functions by making each operator have its own function.
+- create lazy symmetric difference.
 - `function`/`otag`
     - on hold; I have been told there are plans to include oracle and art tag data in the bulk data files.
 - `is`
-    - this will be implemented slowly over time, complete parity with Scryfall is unlikely
+    - will be implemented slowly over time, complete parity with Scryfall is unlikely
+- `artist`
+    - return all cards an artist has had their art on.
+
+## Maybe
+- mana-moji
 - `face` field
     - options will be 'front', 'back', 'strict_back', and 'both'
+- `apropos`
+    - returns cards that synergizes with, tutor for, can be found with, or are combo pieces with the named card.
 
 ## The following fields are not planned for implementation:
-- all art related fields except for `artist`
+- all print specific fields except for `artist` and `set`
     - there are currently no plans to implement any sort of image display, so I do not think they would be particularly useful for this plugin
 - cn/number
 - b/block

@@ -330,8 +330,8 @@ local deps = {
 
 --parenthetical <- {| "(" (branch / subQuery / (parenthetical)*) ")" |}
 return vim.re.compile([[
-  query <- {| queryBranchBody (or queryBranchBody)* |}
-  queryBranchBody <- (!or queryPart)+ -> {}
+  query <- {| branch (or branch)* |}
+  branch <- (!or queryPart)+ -> {}
   or <- ("or" space)+
 
   queryPart <- (namePart / operationPair)
