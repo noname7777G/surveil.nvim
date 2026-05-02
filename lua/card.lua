@@ -32,9 +32,15 @@ require 'Set'
 ---@field attraction_lights integer[]?
 ---@field content_warning boolean?
 ---@field flavor_name string?
+---
 ---@field availabilities table
 ---@field sets string[]
 ---@field nameNoEpithet string?
+---
+---@field evaluatedPower number?
+---@field evaluatedToughness number?
+---@field evaluatedLoyalty number?
+---@field evaluatedDefense number?
 
 ---@class (exact) card_face
 ---@field cmc number?
@@ -50,6 +56,11 @@ require 'Set'
 ---@field power string?
 ---@field toughness string?
 ---@field type_line string?
+---
+---@field evaluatedPower number?
+---@field evaluatedToughness number?
+---@field evaluatedLoyalty number?
+---@field evaluatedDefense number?
 
 ---@class (exact) related_card
 ---@field id string
