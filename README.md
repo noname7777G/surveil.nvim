@@ -3,23 +3,26 @@
 Offline search for Magic, the Gathering(TM) cards.
 Uses card data provided by Scryfall's bulk data API.
 Aims to be print-agnostic; all print-specific fields are either removed to save memory/time or are collated into a list.
-eg, `set` is now `sets`, a list of every set the card has been printed in.
+Eg, `set` is now `sets`, a list of every set the card has been printed in.
+
+I work on this in fits and starts, expect changes to be rapid and bugs to be rampant.
+I will try to leave it in a functioning state if I take a hiatus.
 
 ## Implemented fields and features
 - simple card name search
 - quotes
-- o/oracle (currently functions similar to the fo/fullorcale field in that it will also search reminder text)
-- t/type
-- c/color
-- id/identity
-- mv/manavalue (no odd/even yet)
-- game
-- f/format
-- pow/power
-- tou/toughness
-- loy/loyalty
-- in
-- ~ substitution
+- `o`/oracle (currently functions similar to the fo/fulloracle field in that it will also search reminder text)
+- `t`/`type`
+- `c`/`color`
+- `id`/`identity`
+- `mv`/`manavalue` (no odd/even yet)
+- `game`
+- `f`/`format`
+- `pow`/`power`
+- `tou`/`toughness`
+- `loy`/`loyalty`
+- `in`
+- `~` substitution
 - logical `or`
 
 ## Depends on:
@@ -56,8 +59,26 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 # TODO:
 ## Priority
 - grouping with `()`
+    - Will involve a rework of the query functions
+- optimize
+    - make download and data grooming run in background
+    - pre-generate color relationship data
+        - this will make checking color relationships as fast as indexing two tables and comparing the returned relationship string to the operator field of the query object
+    - Move as much evaluation of card data into `stripdata()` as possible, creating new fields:
+        - `oracleTextSearch`
+            - lowercase
+            - no reminder text
+            - replace self-referential subjects/objects with `~`
+            - no white space or punctuation
+        - `nameSearch`
+            - lowercase
+            - no white space or punctuation
+        - `colorsCount`
+        - `colorIdentityCount`
+        - `colorIndicatorCount`
+        - `producesCount`
+- remove duplicate set codes, particularly "sld"
 - proper support for DFCs
-- Fix reversible cards
 - `manacost`
 - `devotion`
 - `produces`
@@ -68,25 +89,25 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 - make `o`/`oracle` not search reminder text
 - `fo`/`fulloracle`
 - proper support for diacritics and other non-ASCII characters
+- remove or eat Plenary dependency
+- `artist`
+    - return all cards an artist has had their art on
+- text field queries starting with `v/` will use the vim regex engine, respecting user settings
+- text field queries starting with `l/` will use the lua pattern engine
 
 ## Eventually
 - `sort`
-- remove or eat Plenary dependency
-- optimize comparison functions by making each operator have its own function.
-- create lazy symmetric difference.
 - `function`/`otag`
-    - on hold; I have been told there are plans to include oracle and art tag data in the bulk data files.
+    - on hold; I have been told there are plans to include oracle and art tag data in the bulk data files
 - `is`
     - will be implemented slowly over time, complete parity with Scryfall is unlikely
-- `artist`
-    - return all cards an artist has had their art on.
 
 ## Maybe
 - mana-moji
 - `face` field
     - options will be 'front', 'back', 'strict_back', and 'both'
 - `apropos`
-    - returns cards that synergizes with, tutor for, can be found with, or are combo pieces with the named card.
+    - returns cards that synergizes with, tutor for, can be found with, or are combo pieces with the named card
 
 ## The following fields are not planned for implementation:
 - all print specific fields except for `artist`

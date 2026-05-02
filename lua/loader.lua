@@ -23,8 +23,6 @@ local stripData = function(rawJsonObj)
   ---@cast oracleObjects card[]
 
   for _, card in ipairs(rawJsonObj) do
-    --if card.layout == "reversible_card" then goto continue end -- This is a temp solution, I want these printings included in the "in" and "artist" fields.
-
     local oracleObject = oracleObjects[card.oracle_id or card.card_faces[1].oracle_id]
 
     if oracleObject then
