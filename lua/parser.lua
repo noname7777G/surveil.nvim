@@ -33,26 +33,19 @@ local tidleExpansions = {
   "this planeswalker",
 }
 
----@param oracleObject card
 local compareText = function(self, oracleObject)
   if not oracleObject[self.field] then
     return false
   end
 
-  local queryValue
-
-  if type(self.value) == "string" then
-    queryValue = self.value:lower()
-  elseif type(self.value) == "number" then
-    queryValue = self.value
-  end
+  local queryValue = tostring(self.value):lower()
 
   local fieldValue = oracleObject[self.field]:lower()
 
   if self.operation == "=" then
     return fieldValue == queryValue
   elseif self.operation == ":" then
-    if type(queryValue) == "string" and queryValue:find("~", 1, true) then
+    if queryValue:find("~", 1, true) then
       local expandedQueryValue = queryValue:gsub("~", oracleObject.nameNoEpithet or oracleObject.name)
 
       if fieldValue:find(expandedQueryValue, 1, true) then
@@ -67,14 +60,26 @@ local compareText = function(self, oracleObject)
         end
       end
     else
-      return fieldValue:find(queryValue, 1, true)
+      if fieldValue:find(queryValue, 1, true) then
+        return true
+      else
+        return false
+      end
     end
   elseif self.operation == "<=" or self.operation == "<" then
     return true
   elseif self.operation == ">=" then
-    return fieldValue:find(queryValue, 1, true)
+    if fieldValue:find(queryValue, 1, true) then
+      return true
+    else
+      return false
+    end
   elseif self.operation == ">" then
-    return fieldValue ~= queryValue and fieldValue:find(queryValue, 1, true)
+    if fieldValue ~= queryValue and fieldValue:find(queryValue, 1, true) then
+      return true
+    else
+      return false
+    end
   end
 end
 
@@ -251,9 +256,12 @@ local translationTable = {
   f = "legalities",
   format = "legalities",
 
-  pow = "power",
-  tou = "toughness",
-  loy = "loyalty",
+  power = "evaluatedPower",
+  pow = "evaluatedPower",
+  toughness = "evaluatedToughness",
+  tou = "evaluatedToughness",
+  loyalty = "evaluatedLoyalty",
+  loy = "evaluatedLoyalty",
 
   game = "availabilities",
 }
@@ -294,10 +302,10 @@ local functionKey = {
   mana_cost = compareManaCost,
 
   cmc = compareNumber,
-  power = compareNumber,
-  toughness = compareNumber,
-  loyalty = compareNumber,
-  defense = compareNumber,
+  evaluatedPower = compareNumber,
+  evaluatedToughness = compareNumber,
+  evaluatedLoyalty = compareNumber,
+  evaluatedDefense = compareNumber,
 }
 
 local colorsToTable = function(s)

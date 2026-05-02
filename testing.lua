@@ -21,6 +21,6 @@ query = parser:match("f")
 
 vim.print(query)
 
-query = parser:match("")
+query = parser:match("-pow:3 t:creature")
 
 vim.print(query)

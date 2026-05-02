@@ -34,7 +34,7 @@ local stripData = function(rawJsonObj)
         end
       end
 
-      if card.oracle_text and #card.oracle_text > #oracleObject.oracle_text then --ensure we have the most reminder text
+      if card.oracle_text and oracleObject.oracle_text and #card.oracle_text > #oracleObject.oracle_text then --ensure we have the most reminder text
         oracleObject.oracle_text = card.oracle_text
       end
 

@@ -2,7 +2,7 @@ local surveil = require 'surveil'
 
 vim.api.nvim_create_user_command("SurveilUpdate",
   function(args)
-    surveil.updateCards(args.args)
+    surveil.loader.updateCards(args.args)
   end,
   {
     nargs = "?",
