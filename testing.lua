@@ -1,26 +1,14 @@
-local parser = require 'parser'
+local parser = require('parser')
 
-local query = parser:match("foo bar or foo baz or lightning")
+local queries = {
+  "lightning",
+  "-lightning",
+  'o:":"',
+  '-o:":"',
+  "lightning or o:3",
+  "-lightning or -o:3"
+}
 
-vim.print(query)
-
-query = parser:match("foo bar")
-
-vim.print(query)
-
-query = parser:match("for or or bar")
-
-
-vim.print(query)
-
-query = parser:match("t:dwarf or kw:changeling")
-
-vim.print(query)
-
-query = parser:match("f")
-
-vim.print(query)
-
-query = parser:match("-pow:3 t:creature")
-
-vim.print(query)
+for _, query in pairs(queries) do
+  vim.print(parser:match(query))
+end

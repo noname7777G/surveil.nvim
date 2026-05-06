@@ -341,6 +341,13 @@ end
 local deps = {
   attachFunction = attachFunction,
   inverted = inverted,
+  nameFunction = function(t)
+    t.value = t.value:lower()
+    t.compare = function(self, oracleObject)
+      return not not oracleObject.name:lower():find(self.value, 1, true)
+    end
+    return t
+  end
 }
 
 return vim.re.compile([[
@@ -352,14 +359,14 @@ return vim.re.compile([[
   or <- ("or" space)+
 
   queryPart <- space (namePart / operationPair)
-  namePart <- value space !operation
+  namePart <- {| {:inverted: "-"? -> inverted:} {:value: value:} space !operation |} -> nameFunction
 
   operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space |} -> attachFunction
 
   operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
 
   value <- {word} / quote
-  quote <- '"' {~ ((word space)* / '""' -> '"') ~} '"'
-  word <- [_%w-~.]+
+  quote <- '"' {~ ((word/":" space)* / '""' -> '"') ~} '"'
+  word <- [][_%w~.|;,'+-]+
   space <- %s*
 ]], deps)

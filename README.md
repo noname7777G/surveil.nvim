@@ -58,21 +58,30 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 
 # TODO:
 ## Priority
+- flatten the `card_faces` field into just `backFace`
+- `face` field
+    - options will be 'back' and both'
+- fix inverted name searches
 - grouping with `()`
     - Will involve a rework of the query functions
 - optimize
-    - make download and data grooming run in background
+    - live-update only the visible lines in the results buffer, adding the rest after the query has not changed for a second
+    - run data download and grooming run in background
     - pre-generate color relationship data
         - this will make checking color relationships as fast as indexing two tables and comparing the returned relationship string to the operator field of the query object
+        - requires sorting color strings
+        - will remove set-lua dependency
     - Move as much evaluation of card data into `stripdata()` as possible, creating new fields:
         - `oracleTextSearch`
             - lowercase
             - no reminder text
             - replace self-referential subjects/objects with `~`
             - no white space or punctuation
+            - only ASCII
         - `nameSearch`
             - lowercase
             - no white space or punctuation
+            - only ASCII
         - `colorsCount`
         - `colorIdentityCount`
         - `colorIndicatorCount`
@@ -84,16 +93,11 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 - `produces`
 - `mv`/`manavalue` odd/even
 - `pt`/`powtou`
-- completion based on Scryfall catalogs
-- rulings
-- make `o`/`oracle` not search reminder text
 - `fo`/`fulloracle`
 - proper support for diacritics and other non-ASCII characters
 - remove or eat Plenary dependency
 - `artist`
     - return all cards an artist has had their art on
-- text field queries starting with `v/` will use the vim regex engine, respecting user settings
-- text field queries starting with `l/` will use the lua pattern engine
 
 ## Eventually
 - `sort`
@@ -101,13 +105,18 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
     - on hold; I have been told there are plans to include oracle and art tag data in the bulk data files
 - `is`
     - will be implemented slowly over time, complete parity with Scryfall is unlikely
+- `lang`/`language`
+    - return all cards available in a given language
+- text field queries starting with `v/` will use the vim regex engine, respecting user settings
+- text field queries starting with `l/` will use the lua pattern engine
+- completion based on Scryfall catalogs
+- rulings
 
 ## Maybe
 - mana-moji
-- `face` field
-    - options will be 'front', 'back', 'strict_back', and 'both'
 - `apropos`
     - returns cards that synergizes with, tutor for, can be found with, or are combo pieces with the named card
+- prefered language options
 
 ## The following fields are not planned for implementation:
 - all print specific fields except for `artist`

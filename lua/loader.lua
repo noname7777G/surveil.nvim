@@ -5,7 +5,7 @@ local query = require 'query'
 
 local loader = {}
 
-local evaluatePT = function(value)
+loader.evaluatePT = function(value)
   local try = tonumber(value or 0)
 
   if try then
@@ -18,7 +18,41 @@ local evaluatePT = function(value)
   end
 end
 
-local stripData = function(rawJsonObj)
+--loader.charactersOnCards = "([^ ]*)"
+
+--loader.accumulateCharacters = function(card)
+--  local chars = loader.charactersOnCards
+--
+--  local newNameChars = card.name:match(chars)
+--
+--  local newOracleTextChars = ""
+--  local newTypeLineChars = ""
+--
+--  if card.oracle_text then
+--    newOracleTextChars = card.oracle_text:match(chars)
+--  end
+--
+--  if card.type_line then
+--    newTypeLineChars = card.type_line:match(chars)
+--  end
+--
+--  if card.card_faces then
+--    if card.card_faces[1].oracle_text then
+--      newOracleTextChars = newOracleTextChars .. card.card_faces[1].oracle_text:match(chars)
+--    end
+--
+--    if card.card_faces[2].oracle_text then
+--      newOracleTextChars = newOracleTextChars .. card.card_faces[2].oracle_text:match(chars)
+--    end
+--  end
+--
+--  local newChars = newNameChars .. newOracleTextChars .. newTypeLineChars
+--  newChars = newChars:gsub("([%^%$%(%)%.%[%]%*%+%-%?%%])", "%%%1")
+--
+--  loader.charactersOnCards = chars:gsub("%]%*%)", newNameChars .. newOracleTextChars .. newTypeLineChars) .. "]*)"
+--end
+
+loader.processCards = function(rawJsonObj)
   local oracleObjects = {}
   ---@cast oracleObjects card[]
 
@@ -38,119 +72,49 @@ local stripData = function(rawJsonObj)
 
       oracleObject.sets[#oracleObject.sets + 1] = card.set
     else
-      card.arena_id = nil
-      card.id = nil
-      card.lang = nil
-      card.mtgo_id = nil
-      card.mtgo_foil_id = nil
-      card.multiverse_ids = nil
-      card.resource_id = nil
-      card.tcgplayer_id = nil        -- To remain nil until they stop union busting
-      card.tcgplayer_etched_id = nil -- To remain nil until they stop union busting
-      card.cardmarket_id = nil
-      card.object = nil
-      card.scryfall_uri = nil
-      card.uri = nil
-
-      card.artist = nil
-      card.artist_ids = nil
-      card.booster = nil
-      card.border_color = nil
-      card.card_back_id = nil
-      card.collector_number = nil
-      card.digital = nil
-      card.finishes = nil
-      card.flavor_text = nil
-      card.frame_effects = nil
-      card.frame = nil
-      card.full_art = nil
-
       card.availabilities = {}
       for _, game in ipairs(card.games) do
         card.availabilities[game] = true
       end
-      card.games = nil
-
-      card.highres_image = nil
-      card.illustration_id = nil
-      card.image_status = nil
-      card.image_uris = nil
-      card.oversized = nil
-      card.prices = nil
-      card.printed_name = nil
-      card.printed_text = nil
-      card.printed_type_line = nil
-      card.promo = nil
-      card.promo_types = nil
-      card.purchase_uris = nil
-      card.rarity = nil
-      card.related_uris = nil
-      card.released_at = nil
-      card.reprint = nil
-      card.scryfall_set_uri = nil
-      card.set_name = nil
-      card.search_uri = nil
-      card.set_type = nil
-      card.set_uri = nil
 
       card.sets = {}
       card.sets[1] = card.set
-      card.set = nil
-
-      card.set_id = nil
-      card.story_spotlight = nil
-      card.textless = nil
-      card.variation = nil
-      card.variation_of = nil
-      card.security_stamp = nil
-      card.watermark = nil
-      card.preview = nil
-
-      card.foil = nil
-      card.nonfoil = nil
 
       if card.card_faces then
         for _, face in ipairs(card.card_faces) do
-          face.artist = nil
-          face.artist_id = nil
-          face.flavor_text = nil
-          face.illustration_id = nil
-          face.image_uris = nil
-          face.printed_name = nil
-          face.printed_text = nil
-          face.printed_type_line = nil
-          face.watermark = nil
-
           if face.power then
-            face.evaluatedPower = evaluatePT(face.power)
+            face.evaluatedPower = loader.evaluatePT(face.power)
           end
           if face.toughness then
-            face.evaluatedToughness = evaluatePT(face.toughness)
+            face.evaluatedToughness = loader.evaluatePT(face.toughness)
           end
           if face.loyalty then
-            face.evaluatedLoyalty = evaluatePT(face.loyalty)
+            face.evaluatedLoyalty = loader.evaluatePT(face.loyalty)
           end
           if face.defense then
-            face.evaluatedDefense = evaluatePT(face.defense)
+            face.evaluatedDefense = loader.evaluatePT(face.defense)
           end
 
           face.nameNoEpithet = face.name:match("^([^,]+),")
         end
       end
 
+      loader.stripData(card)
+      --loader.accumulateCharacters(card)
+
       ---@cast card card
 
       if card.power then
-        card.evaluatedPower = evaluatePT(card.power)
+        card.evaluatedPower = loader.evaluatePT(card.power)
       end
       if card.toughness then
-        card.evaluatedToughness = evaluatePT(card.toughness)
+        card.evaluatedToughness = loader.evaluatePT(card.toughness)
       end
       if card.loyalty then
-        card.evaluatedLoyalty = evaluatePT(card.loyalty)
+        card.evaluatedLoyalty = loader.evaluatePT(card.loyalty)
       end
       if card.defense then
-        card.evaluatedDefense = evaluatePT(card.defense)
+        card.evaluatedDefense = loader.evaluatePT(card.defense)
       end
 
       if card.type_line then
@@ -161,7 +125,6 @@ local stripData = function(rawJsonObj)
 
       oracleObjects[card.oracle_id or card.card_faces[1].oracle_id] = card
     end
-    ::continue::
   end
 
   local orderedList = {}
@@ -169,11 +132,82 @@ local stripData = function(rawJsonObj)
     table.insert(orderedList, card)
   end
 
-  --vim.print(longestCardName .. " is " .. nameMaxLen .. " characters long.")
-  --vim.print("The type line of " .. longestTypeLineCardName .. " is " .. typeLineMaxLen .. " characters long.")
-  --vim.print(manaCostMaxLen)
-
   return orderedList
+end
+
+loader.stripData = function(card)
+  card.arena_id = nil
+  card.id = nil
+  card.lang = nil
+  card.mtgo_id = nil
+  card.mtgo_foil_id = nil
+  card.multiverse_ids = nil
+  card.resource_id = nil
+  card.tcgplayer_id = nil        -- To remain nil until they stop union busting
+  card.tcgplayer_etched_id = nil -- To remain nil until they stop union busting
+  card.cardmarket_id = nil
+  card.object = nil
+  card.scryfall_uri = nil
+  card.uri = nil
+  card.artist = nil
+  card.artist_ids = nil
+  card.booster = nil
+  card.border_color = nil
+  card.card_back_id = nil
+  card.collector_number = nil
+  card.digital = nil
+  card.finishes = nil
+  card.flavor_text = nil
+  card.frame_effects = nil
+  card.frame = nil
+  card.full_art = nil
+  card.highres_image = nil
+  card.illustration_id = nil
+  card.image_status = nil
+  card.image_uris = nil
+  card.oversized = nil
+  card.prices = nil
+  card.printed_name = nil
+  card.printed_text = nil
+  card.printed_type_line = nil
+  card.promo = nil
+  card.promo_types = nil
+  card.purchase_uris = nil
+  card.rarity = nil
+  card.related_uris = nil
+  card.released_at = nil
+  card.reprint = nil
+  card.scryfall_set_uri = nil
+  card.set_name = nil
+  card.search_uri = nil
+  card.set_type = nil
+  card.set_uri = nil
+  card.set = nil
+  card.set_id = nil
+  card.story_spotlight = nil
+  card.textless = nil
+  card.variation = nil
+  card.variation_of = nil
+  card.security_stamp = nil
+  card.watermark = nil
+  card.preview = nil
+  card.foil = nil
+  card.nonfoil = nil
+  card.games = nil
+
+  if card.card_faces then
+    for _, face in pairs(card.card_faces) do
+      face.artist = nil
+      face.artist_id = nil
+      face.flavor_text = nil
+      face.illustration_id = nil
+      face.image_uris = nil
+      face.printed_name = nil
+      face.printed_text = nil
+      face.printed_type_line = nil
+      face.watermark = nil
+    end
+  end
 end
 
 loader.updateCards = function(skipDownload)
@@ -208,7 +242,7 @@ loader.updateCards = function(skipDownload)
   local rawJson = rawBulkFile:read("a")
   local rawJsonObj = vim.json.decode(rawJson, { object = true, array = true })
 
-  local oracleObjects = stripData(rawJsonObj)
+  local oracleObjects = loader.processCards(rawJsonObj)
   local oracleObjectsJson = vim.json.encode(oracleObjects)
 
   local bulkFile = io.open(opts.bulkDataPath, "w+")
@@ -221,7 +255,7 @@ loader.updateCards = function(skipDownload)
   io.close(bulkFile)
 end
 
-local sortList = function(list, field)
+loader.sortList = function(list, field)
   if field == "edhrec_rank" then
     table.sort(list, function(a, b)
       local aV = a["edhrec_rank"] or 9999999
@@ -266,7 +300,7 @@ loader.loadCards = function()
   end
 
   if opts.sortPredicate then
-    sortList(cardLists.allCards, opts.sortPredicate)
+    loader.sortList(cardLists.allCards, opts.sortPredicate)
   end
 
   for _, v in pairs(cardLists.allCards) do

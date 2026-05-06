@@ -26,16 +26,9 @@ M.queryTable = function(list, query)
 
     for _, branch in pairs(parsedQuery) do
       for _, qObject in pairs(branch) do
-        if type(qObject) == 'string' then
-          if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
-            addObject = false
-            break
-          end
-        elseif type(qObject) == "table" then
-          if not (qObject:compare(oracleObject) ~= qObject.inverted) then
-            addObject = false
-            break
-          end
+        if not (qObject:compare(oracleObject) ~= qObject.inverted) then
+          addObject = false
+          break
         end
 
         addObject = true
@@ -64,16 +57,9 @@ M.query = function(query)
     local addObject = false
     for _, branch in pairs(parsedQuery) do
       for _, qObject in pairs(branch) do
-        if type(qObject) == 'string' then
-          if not oracleObject.name:lower():find(qObject:lower(), 1, true) then
-            addObject = false
-            break
-          end
-        elseif type(qObject) == "table" then
-          if not (qObject:compare(oracleObject) ~= qObject.inverted) then
-            addObject = false
-            break
-          end
+        if not (qObject:compare(oracleObject) ~= qObject.inverted) then
+          addObject = false
+          break
         end
 
         addObject = true

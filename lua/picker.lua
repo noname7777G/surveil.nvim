@@ -33,6 +33,7 @@ searchMenu.windowParts = {
 searchMenu.querySession = require 'query'
 
 searchMenu.opts = {}
+searchMenu.cardNames = {}
 
 function searchMenu.moveCursorUp()
   local pos = vim.api.nvim_win_get_cursor(0)
@@ -76,12 +77,16 @@ end
 
 ---@param cards card[]
 ---@param actualWidth integer
----@return string[]
-local function generateResultsLines(cards, actualWidth)
-  local cardNames = {}
-  for _, card in pairs(cards) do
-    local oneThird = math.floor((actualWidth - 2) / 3)
-    local oneSixth = math.max(math.floor((actualWidth - 2) / 6), 15)
+searchMenu.generateResultsLines = function(cards, actualWidth)
+  local oneThird = math.floor((actualWidth - 2) / 3)
+  local oneSixth = math.max(math.floor((actualWidth - 2) / 6), 15)
+
+  for i = 1, #searchMenu.cardNames do
+    searchMenu.cardNames[i] = nil
+  end
+
+  for i = 1, #cards do
+    local card = cards[i]
 
     local name = card.name:sub(1, oneThird)
     local nameLen = #vim.str_utf_pos(name)
@@ -117,10 +122,8 @@ local function generateResultsLines(cards, actualWidth)
         manaCostBufferSpace ..
         manaCost
 
-    table.insert(cardNames, displayLine)
+    searchMenu.cardNames[#searchMenu.cardNames + 1] = displayLine
   end
-
-  return cardNames
 end
 
 local function makeHighlightGroups()
@@ -237,9 +240,10 @@ function searchMenu:ShowMenu(target)
   searchMenu.searchWinBufnr = vim.api.nvim_win_get_buf(searchMenu.searchWindow)
   searchMenu.querySession.setPrimaryTable(target)
 
-  vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false,
-    generateResultsLines(target, actualWidth))
   searchMenu.currentResults = target
+  searchMenu.generateResultsLines(searchMenu.currentResults, actualWidth)
+
+  vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, searchMenu.cardNames)
 
   vim.api.nvim_buf_attach(searchMenu.searchWinBufnr, true, {
     on_lines = function(_, BufNum, _, firstLine, lastLine)
@@ -247,14 +251,11 @@ function searchMenu:ShowMenu(target)
 
       searchMenu.currentResults = searchMenu.querySession.query(line) or {}
 
+      searchMenu.generateResultsLines(searchMenu.currentResults, actualWidth)
+
       vim.schedule(function()
         vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, {})
-      end)
-
-      local cardNames = generateResultsLines(searchMenu.currentResults, actualWidth)
-
-      vim.schedule(function()
-        vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, cardNames)
+        vim.api.nvim_buf_set_lines(searchMenu.resultWinBufnr, 0, -1, false, searchMenu.cardNames)
       end)
     end
   })
