@@ -366,7 +366,8 @@ return vim.re.compile([[
   operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
 
   value <- {word} / quote
-  quote <- '"' {~ ((word/":" space)* / '""' -> '"') ~} '"'
-  word <- [][_%w~.|;,'+-]+
+  quote <- '"' {~ ((word/nonWord space)* / '""' -> '"') ~} '"'
+  word <- [_%w~.-]+
+  nonWord <- [][)(}{:|+!]+
   space <- %s*
 ]], deps)
