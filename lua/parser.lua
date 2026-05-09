@@ -23,16 +23,6 @@ local compareNumber = function(self, oracleObject)
   end
 end
 
-local tidleExpansions = {
-  "this card",
-  "this creature",
-  "this spell",
-  "this artifact",
-  "this enchantment",
-  "this land",
-  "this planeswalker",
-}
-
 local compareText = function(self, oracleObject)
   if not oracleObject[self.field] then
     return false
@@ -45,26 +35,10 @@ local compareText = function(self, oracleObject)
   if self.operation == "=" then
     return fieldValue == queryValue
   elseif self.operation == ":" then
-    if queryValue:find("~", 1, true) then
-      local expandedQueryValue = queryValue:gsub("~", oracleObject.nameNoEpithet or oracleObject.name)
-
-      if fieldValue:find(expandedQueryValue, 1, true) then
-        return true
-      else
-        for _, v in ipairs(tidleExpansions) do
-          expandedQueryValue = queryValue:gsub("~", v)
-
-          if fieldValue:lower():find(expandedQueryValue, 1, true) then
-            return true
-          end
-        end
-      end
+    if fieldValue:find(queryValue, 1, true) then
+      return true
     else
-      if fieldValue:find(queryValue, 1, true) then
-        return true
-      else
-        return false
-      end
+      return false
     end
   elseif self.operation == "<=" or self.operation == "<" then
     return true
@@ -234,8 +208,8 @@ end
 local default = function(_, _) return true end
 
 local translationTable = {
-  o = "oracle_text",
-  oracle = "oracle_text",
+  o = "oracleTextSearch",
+  oracle = "oracleTextSearch",
 
   kw = "keywords",
   keyword = "keywords",
@@ -269,7 +243,7 @@ local translationTable = {
 translationTable["in"] = "sets" --"in" is a lua keyword and must be added to the table this way.
 
 local functionKey = {
-  oracle_text = compareText,
+  oracleTextSearch = compareText,
   type_line = compareText,
 
   keywords = function(self, oracleObject)
@@ -286,12 +260,7 @@ local functionKey = {
   end,
 
   sets = function(self, oracleObject)
-    for _, v in ipairs(oracleObject.sets) do
-      if v == self.value:lower() then
-        return true
-      end
-    end
-    return false
+    return oracleObject.sets[self.value]
   end,
 
   legalities = function(self, oracleObject)
@@ -344,7 +313,7 @@ local deps = {
   nameFunction = function(t)
     t.value = t.value:lower()
     t.compare = function(self, oracleObject)
-      return not not oracleObject.name:lower():find(self.value, 1, true)
+      return not not oracleObject.nameSearch:find(self.value, 1, true)
     end
     return t
   end

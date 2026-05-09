@@ -18,39 +18,73 @@ loader.evaluatePT = function(value)
   end
 end
 
---loader.charactersOnCards = "([^ ]*)"
+loader.chars = {}
 
---loader.accumulateCharacters = function(card)
---  local chars = loader.charactersOnCards
---
---  local newNameChars = card.name:match(chars)
---
---  local newOracleTextChars = ""
---  local newTypeLineChars = ""
---
---  if card.oracle_text then
---    newOracleTextChars = card.oracle_text:match(chars)
---  end
---
---  if card.type_line then
---    newTypeLineChars = card.type_line:match(chars)
---  end
---
---  if card.card_faces then
---    if card.card_faces[1].oracle_text then
---      newOracleTextChars = newOracleTextChars .. card.card_faces[1].oracle_text:match(chars)
---    end
---
---    if card.card_faces[2].oracle_text then
---      newOracleTextChars = newOracleTextChars .. card.card_faces[2].oracle_text:match(chars)
---    end
---  end
---
---  local newChars = newNameChars .. newOracleTextChars .. newTypeLineChars
---  newChars = newChars:gsub("([%^%$%(%)%.%[%]%*%+%-%?%%])", "%%%1")
---
---  loader.charactersOnCards = chars:gsub("%]%*%)", newNameChars .. newOracleTextChars .. newTypeLineChars) .. "]*)"
---end
+loader.addCharsToTable = function(str)
+  local bytesRemaining = 0
+  local inMultiByteChar = false
+  for i = 1, #str, 1 do
+    local byte = str:byte(i)
+
+    if inMultiByteChar then
+      loader.chars.TEMP = loader.chars.TEMP .. string.char(byte)
+
+      bytesRemaining = bytesRemaining - 1
+
+      if bytesRemaining <= 0 then
+        inMultiByteChar = false
+        loader.chars[loader.chars.TEMP] = true
+        loader.chars.TEMP = ""
+      end
+    elseif byte > 127 then
+      inMultiByteChar = true
+      if byte > 239 then
+        bytesRemaining = 3
+      elseif byte > 223 then
+        bytesRemaining = 2
+      else
+        bytesRemaining = 1
+      end
+
+      loader.chars.TEMP = string.char(byte)
+    else
+      loader.chars[string.char(byte)] = true
+    end
+  end
+end
+
+loader.accumulateCharacters = function(card)
+  loader.addCharsToTable(card.name)
+
+  if card.oracle_text then
+    loader.addCharsToTable(card.oracle_text)
+  end
+
+  if card.type_line then
+    loader.addCharsToTable(card.type_line)
+  end
+
+  if card.card_faces then
+    if card.card_faces[1].oracle_text then
+      loader.addCharsToTable(card.card_faces[1].oracle_text)
+    end
+
+    if card.card_faces[2].oracle_text then
+      loader.addCharsToTable(card.card_faces[2].oracle_text)
+    end
+  end
+end
+
+loader.tidleExpansions = {
+  "thiscard",
+  "thiscreature",
+  "thisspell",
+  "thisartifact",
+  "thisenchantment",
+  "thisland",
+  "thisplaneswalker",
+  "thispermanent",
+}
 
 loader.processCards = function(rawJsonObj)
   local oracleObjects = {}
@@ -70,7 +104,7 @@ loader.processCards = function(rawJsonObj)
         oracleObject.oracle_text = card.oracle_text
       end
 
-      oracleObject.sets[#oracleObject.sets + 1] = card.set
+      oracleObject.sets[card.set] = true
     else
       card.availabilities = {}
       for _, game in ipairs(card.games) do
@@ -78,7 +112,7 @@ loader.processCards = function(rawJsonObj)
       end
 
       card.sets = {}
-      card.sets[1] = card.set
+      card.sets[card.set] = true
 
       if card.card_faces then
         for _, face in ipairs(card.card_faces) do
@@ -100,7 +134,6 @@ loader.processCards = function(rawJsonObj)
       end
 
       loader.stripData(card)
-      --loader.accumulateCharacters(card)
 
       ---@cast card card
 
@@ -121,7 +154,6 @@ loader.processCards = function(rawJsonObj)
         card.type_line = card.type_line:gsub("\226\128\148", "-")
       end
 
-      card.nameNoEpithet = card.name:match("^([^,]+),")
 
       oracleObjects[card.oracle_id or card.card_faces[1].oracle_id] = card
     end
@@ -129,7 +161,32 @@ loader.processCards = function(rawJsonObj)
 
   local orderedList = {}
   for _, card in pairs(oracleObjects) do
+    card.nameSearch = card.name:lower():gsub("[%s,']+", "")
+
+    if card.nameSearch:find("^([^,]+),") then
+      card.nameNoEpithet = card.nameSearch:match("^([^,]+),"):lower()
+    end
+
+    if card.oracle_text then
+      card.oracleTextSearch = card.oracle_text:lower():gsub("[%s,']+", "")
+
+      if card.nameNoEpithet then
+        card.oracleTextSearch = card.oracleTextSearch:gsub(card.nameNoEpithet, "~")
+      else
+        card.oracleTextSearch = card.oracleTextSearch:gsub(card.nameSearch, "~")
+      end
+
+      for _, v in pairs(loader.tidleExpansions) do
+        card.oracleTextSearch = card.oracleTextSearch:gsub(v, "~")
+      end
+    end
+
     table.insert(orderedList, card)
+  end
+
+  local file = io.open(opts.cacheDir .. "cardChars.json", "a")
+  if file then
+    file:write(vim.json.encode(loader.chars))
   end
 
   return orderedList

@@ -34,13 +34,16 @@ require 'Set'
 ---@field flavor_name string?
 ---
 ---@field availabilities table
----@field sets string[]
+---@field sets table
 ---@field nameNoEpithet string?
 ---
 ---@field evaluatedPower number?
 ---@field evaluatedToughness number?
 ---@field evaluatedLoyalty number?
 ---@field evaluatedDefense number?
+---
+---@field oracleTextSearch string?
+---@field nameSearch string
 
 ---@class (exact) card_face
 ---@field cmc number?
