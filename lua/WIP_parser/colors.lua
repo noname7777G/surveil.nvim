@@ -1,39 +1,39 @@
+require('card')
+
 local colors = {}
 
+local file = io.open("./data/colorRelationships.json", "r")
+
+local json = ""
+if file then
+  json = file:read()
+end
+
+colors.relationshipTable = vim.json.decode(json)
+
+---@param oracleObject card
 colors["="] = function(self, oracleObject)
-  return (self.value.symmetric_difference(oracleObject.colors).size == 0)
+  return colors.relationshipTable[self.value][oracleObject[self.field]] == 0
 end
 
-colors[":"] = function(self, oracleObject)
-  if self.value.size == 0 then
-    return oracleObject.colors.size == 0
-  else
-    return self.value.is_superset(oracleObject.colors)
-  end
-end
-
+---@param oracleObject card
 colors[">="] = function(self, oracleObject)
-  return (self.value.is_superset(oracleObject.colors))
+  return colors.relationshipTable[self.value][oracleObject[self.field]] >= 0
 end
 
+---@param oracleObject card
 colors["<="] = function(self, oracleObject)
-  return (oracleObject.colors.is_superset(self.value))
+  return colors.relationshipTable[self.value][oracleObject[self.field]] <= 0
 end
 
-colors["<"] = function(self, oracleObject)
-  if self.value.symmetric_difference(oracleObject.colors).size > 0 then
-    return oracleObject.colors.is_superset(self.value)
-  else
-    return false
-  end
-end
-
+---@param oracleObject card
 colors[">"] = function(self, oracleObject)
-  if self.value.symmetric_difference(oracleObject.colors).size > 0 then
-    return self.value.is_superset(oracleObject.colors)
-  else
-    return false
-  end
+  return colors.relationshipTable[self.value][oracleObject[self.field]] > 0
+end
+
+---@param oracleObject card
+colors["<"] = function(self, oracleObject)
+  return colors.relationshipTable[self.value][oracleObject[self.field]] < 0
 end
 
 return colors

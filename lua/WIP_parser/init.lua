@@ -1,16 +1,13 @@
 local numbers = require 'numbers'
 local colors = require 'colors'
-local color_identity = require 'color_identity'
 
-local inverted = function(s)
-  return s:len() > 0
-end
+local parser = {}
 
-local default = function(_, _) return true end
+parser.termIgnored = function(_, _) return true end --TODO: make this inform the user of their error.
 
-local translationTable = {
-  o = "oracle_text",
-  oracle = "oracle_text",
+parser.translationTable = {
+  o = "oracleTextSearch",
+  oracle = "oracleTextSearch",
 
   kw = "keywords",
   keyword = "keywords",
@@ -32,92 +29,92 @@ local translationTable = {
   format = "legalities",
 
   pow = "evaluatedPower",
+  power = "evaluatedPower",
   tou = "evaluatedToughness",
+  toughness = "evaluatedToughness",
   loy = "evaluatedLoyalty",
+  loyalty = "evaluatedLoyalty",
   defense = "evaluatedDefense",
 
   game = "availabilities",
+
+  set = "sets"
 }
 
-translationTable["in"] = "sets" --"in" is a lua keyword and must be added to the table this way.
+parser.translationTable["in"] = "sets"
 
-local functionKey = {
-  oracle_text = compareText,
-  type_line = compareText,
+parser.colonTranslation = {
+  evaluatedPower = "=",
+  evaluatedToughness = "=",
+  evaluatedLoyalty = "=",
+  evaluatedDefense = "=",
 
-  keywords = function(self, oracleObject)
-    for _, v in pairs(oracleObject[self.field]) do
-      if v:upper() == self.value:upper() then
-        return true
-      end
-    end
-    return false
-  end,
+  cmc = "=",
 
-  availabilities = function(self, oracleObject)
-    return oracleObject.availabilities[self.value]
-  end,
-
-  sets = function(self, oracleObject)
-    for _, v in ipairs(oracleObject.sets) do
-      if v == self.value:lower() then
-        return true
-      end
-    end
-    return false
-  end,
-
-  legalities = function(self, oracleObject)
-    local v = oracleObject.legalities[self.value]
-    return (v == "legal" or v == "restricted")
-  end,
-
-  mana_cost = compareManaCost,
-
-  cmc = numbers[self.field][self.operation],
-  power = numbers[self.field][self.operation],
-  toughness = numbers[self.field][self.operation],
-  loyalty = numbers[self.field][self.operation],
-  defense = numbers[self.field][self.operation],
 }
 
-local colorsToTable = function(s)
-  local t = {}
-  s:upper():gsub(".", function(c) table.insert(t, c) end) --convert user string to table
-  return t
+parser.functionGroupKey = {
+  evaluatedPower = numbers,
+  evaluatedToughness = numbers,
+  evaluatedLoyalty = numbers,
+  evaluatedDefense = numbers,
+
+  cmc = numbers,
+
+}
+
+parser.tablizeOperationPairRe = vim.re.compile([[
+  ret <- {| {:inverted: "-"? :} {:field: word :} {:operation: operation :} {:value: value :} space |}
+  operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
+
+  value <- {word} / quote
+  quote <- '"' {~ ((word/nonWord space)* / '""' -> '"') ~} '"'
+  word <- [_%w~.-]+
+  nonWord <- [][)(}{:|+!]+
+  space <- %s*
+]])
+
+local attachFunction = function(operationPair)
+  local queryPart = parser.tablizeOperationPairRe:match(operationPair)
+  queryPart.string = operationPair
+
+  queryPart.field = parser.translationTable[queryPart.field]
+  if not queryPart.field then
+    queryPart.compare = parser.termIgnored
+    return queryPart
+  end
+
+  queryPart.operation = parser.colonTranslation[queryPart.field] or queryPart.operation
+
+  queryPart.compare = parser.functionGroupKey[queryPart.field]
+  if not queryPart.compare then
+    queryPart.compare = parser.termIgnored
+    return queryPart
+  end
+
+  queryPart.compare = queryPart.compare[queryPart.operation]
+  if not queryPart.compare then
+    queryPart.compare = parser.termIgnored
+    return queryPart
+  end
+
+  return queryPart
 end
 
-local attachFunction = function(t)
-  t.field = translationTable[t.field] or t.field
-
-  t.fullQuery = t.field .. t.operation .. t.value
-
-  if t.inverted then
-    t.fullQuery = "-" .. t.fullQuery
+local nameFunction = function(t)
+  t.value = t.value:lower()
+  t.compare = function(self, oracleObject)
+    return oracleObject.nameSearch:find(self.value, 1, true) ~= nil
   end
-
-  t.value = tonumber(t.value) or t.value
-
-  if t.field == "colors" or t.field == "color_identity" then
-    if type(t.value) == "string" then
-      t.value = set(colorNames[string.lower(t.value or "")] or colorsToTable(t.value) or {})
-      t.compare = _compareColors[t.field][t.operation]
-    else
-      t.compare = compareColorCount
-    end
-  end
-
-  t.compare = t.compare or functionKey[t.field] or default
-
   return t
 end
 
 local deps = {
   attachFunction = attachFunction,
-  inverted = inverted,
+  nameFunction = nameFunction,
 }
 
-return vim.re.compile([[
+parser.re = vim.re.compile([[
   query <- {| branch (or branch)* |}
 
   --balanced <- "(" ([^()] / balanced)* ")"
@@ -126,14 +123,19 @@ return vim.re.compile([[
   or <- ("or" space)+
 
   queryPart <- space (namePart / operationPair)
-  namePart <- value space !operation
+  namePart <- "-"? value space !operation -> nameFunction
 
-  operationPair <- {| {:inverted: "-"? -> inverted:} {:field: word :} {:operation: operation :} {:value: value :} space |} -> attachFunction
+  operationPair <- "-"? word operation value space -> attachFunction
 
   operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
 
   value <- {word} / quote
-  quote <- '"' {~ ((word space)* / '""' -> '"') ~} '"'
-  word <- [_%w-~.]+
+  quote <- '"' {~ ((word/nonWord space)* / '""' -> '"') ~} '"'
+  word <- [_%w~.-]+
+  nonWord <- [][)(}{:|+!]+
   space <- %s*
 ]], deps)
+
+parser.match = parser.re.match
+
+return parser
