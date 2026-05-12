@@ -13,27 +13,52 @@ colors.relationshipTable = vim.json.decode(json)
 
 ---@param oracleObject card
 colors["="] = function(self, oracleObject)
-  return colors.relationshipTable[self.value][oracleObject[self.field]] == 0
+  local relationship = colors.relationshipTable[self.value][oracleObject[self.field]]
+  if relationship then
+    return relationship == 0
+  else
+    return false
+  end
 end
 
 ---@param oracleObject card
 colors[">="] = function(self, oracleObject)
-  return colors.relationshipTable[self.value][oracleObject[self.field]] >= 0
+  local relationship = colors.relationshipTable[self.value][oracleObject[self.field]]
+  if relationship then
+    return relationship >= 0
+  else
+    return false
+  end
 end
 
 ---@param oracleObject card
 colors["<="] = function(self, oracleObject)
-  return colors.relationshipTable[self.value][oracleObject[self.field]] <= 0
+  local relationship = colors.relationshipTable[self.value][oracleObject[self.field]]
+  if relationship then
+    return relationship <= 0
+  else
+    return false
+  end
 end
 
 ---@param oracleObject card
 colors[">"] = function(self, oracleObject)
-  return colors.relationshipTable[self.value][oracleObject[self.field]] > 0
+  local relationship = colors.relationshipTable[self.value][oracleObject[self.field]]
+  if relationship then
+    return relationship > 0
+  else
+    return false
+  end
 end
 
 ---@param oracleObject card
 colors["<"] = function(self, oracleObject)
-  return colors.relationshipTable[self.value][oracleObject[self.field]] < 0
+  local relationship = colors.relationshipTable[self.value][oracleObject[self.field]]
+  if relationship then
+    return relationship < 0
+  else
+    return false
+  end
 end
 
 return colors

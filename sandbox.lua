@@ -1,7 +1,4 @@
-local testFunc = nil
+local test = nil
+local number = 1
 
-local t = {}
-
-t[testFunc] = 1
-
-vim.print(t[testFunc])
+vim.print(test >= number)

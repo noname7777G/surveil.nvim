@@ -59,9 +59,8 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
 # TODO:
 ## Priority
 - flatten the `card_faces` field into just `backFace`
-- `face` field
-    - options will be 'back' and both'
-- fix inverted name searches
+- `face` search field
+    - options will be 'back' and both', front only will be the default
 - grouping with `()`
     - Will involve a rework of the query functions
 - optimize
@@ -76,7 +75,7 @@ I recommend setting to "game:paper f:vintage" to filter out tokens and memorabil
             - lowercase
             - no reminder text
             - replace self-referential subjects/objects with `~`
-            - no white space or punctuation
+            - no white space, only game-relavent punctuation (colon, brackets, etc).
             - only ASCII
         - `nameSearch`
             - lowercase
