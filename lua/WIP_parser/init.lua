@@ -1,40 +1,31 @@
-local numbers = require 'numbers'
-local colors = require 'colors'
+local number = require 'number'
+local color = require 'color'
 
 local parser = {}
 
-parser.termIgnored = function(_, _) return true end --TODO: make this inform the user of their error.
+parser.termIgnored = function(_, _) return true end -- TODO: make this inform the user of their error.
+-- How to remove term from query before running it so we don't waste calls?
 
 parser.translationTable = {
+  ----- Simple text search
+
   o = "oracleTextSearch",
   oracle = "oracleTextSearch",
-
-  kw = "keywords",
-  keyword = "keywords",
 
   t = "type_line",
   type = "type_line",
 
-  mv = "cmc",
-  manavalue = "cmc",
+  ----- This needs special handling
+
   m = "mana_cost",
   mana = "mana_cost",
 
-  c = "colors",
-  color = "colors",
-  id = "color_identity",
-  identity = "color_identity",
+  ----- These are fields that can just be indexed
+  kw = "keywords",
+  keyword = "keywords",
 
   f = "legalities",
   format = "legalities",
-
-  pow = "evaluatedPower",
-  power = "evaluatedPower",
-  tou = "evaluatedToughness",
-  toughness = "evaluatedToughness",
-  loy = "evaluatedLoyalty",
-  loyalty = "evaluatedLoyalty",
-  defense = "evaluatedDefense",
 
   game = "availabilities",
 
@@ -43,28 +34,8 @@ parser.translationTable = {
 
 parser.translationTable["in"] = "sets"
 
-parser.colonTranslation = {
-  evaluatedPower = "=",
-  evaluatedToughness = "=",
-  evaluatedLoyalty = "=",
-  evaluatedDefense = "=",
-
-  cmc = "=",
-
-}
-
-parser.functionGroupKey = {
-  evaluatedPower = numbers,
-  evaluatedToughness = numbers,
-  evaluatedLoyalty = numbers,
-  evaluatedDefense = numbers,
-
-  cmc = numbers,
-
-}
-
 parser.tablizeOperationPairRe = vim.re.compile([[
-  ret <- {| {:inverted: "-"? :} {:field: word :} {:operation: operation :} {:value: value :} space |}
+  ret <- {| {:inverted: "-"? -> inv :} {:field: word :} {:operation: operation :} {:value: value :} space |}
   operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
 
   value <- {word} / quote
@@ -72,36 +43,16 @@ parser.tablizeOperationPairRe = vim.re.compile([[
   word <- [_%w~.-]+
   nonWord <- [][)(}{:|+!]+
   space <- %s*
-]])
+]], { inv = function(_) return true end })
 
-local attachFunction = function(operationPair)
+local makePair = function(operationPair)
   local queryPart = parser.tablizeOperationPairRe:match(operationPair)
   queryPart.string = operationPair
-
-  queryPart.field = parser.translationTable[queryPart.field]
-  if not queryPart.field then
-    queryPart.compare = parser.termIgnored
-    return queryPart
-  end
-
-  queryPart.operation = parser.colonTranslation[queryPart.field] or queryPart.operation
-
-  queryPart.compare = parser.functionGroupKey[queryPart.field]
-  if not queryPart.compare then
-    queryPart.compare = parser.termIgnored
-    return queryPart
-  end
-
-  queryPart.compare = queryPart.compare[queryPart.operation]
-  if not queryPart.compare then
-    queryPart.compare = parser.termIgnored
-    return queryPart
-  end
 
   return queryPart
 end
 
-local nameFunction = function(t)
+local makeName = function(t)
   t.value = t.value:lower()
   t.compare = function(self, oracleObject)
     return oracleObject.nameSearch:find(self.value, 1, true) ~= nil
@@ -110,8 +61,8 @@ local nameFunction = function(t)
 end
 
 local deps = {
-  attachFunction = attachFunction,
-  nameFunction = nameFunction,
+  makePair = makePair,
+  makeName = makeName,
 }
 
 parser.re = vim.re.compile([[
@@ -123,11 +74,11 @@ parser.re = vim.re.compile([[
   or <- ("or" space)+
 
   queryPart <- space (namePart / operationPair)
-  namePart <- "-"? value space !operation -> nameFunction
+  namePart <- "-"? value space !operation -> makeName
 
-  operationPair <- "-"? word operation value space -> attachFunction
+  operationPair <- "-"? word operation value space -> makePair
 
-  operation <- ":" / "=" / "<=" / ">=" / "<" / ">"
+  operation <- ":" / "=" / "<=" / ">=" / "<" / ">" / "!="
 
   value <- {word} / quote
   quote <- '"' {~ ((word/nonWord space)* / '""' -> '"') ~} '"'

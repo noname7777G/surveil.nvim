@@ -184,7 +184,7 @@ loader.processCards = function(rawJsonObj)
     table.insert(orderedList, card)
   end
 
-  local file = io.open(opts.cacheDir .. "cardChars.json", "a")
+  local file = io.open(opts.cacheDir .. "/cardChars.json", "a")
   if file then
     file:write(vim.json.encode(loader.chars))
   end
