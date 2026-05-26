@@ -11,8 +11,16 @@ simpleIndex.alias = {
 
   set = "sets",
 }
+simpleIndex.alias["in"] = "sets" -- Lua keyword
 
-simpleIndex.alias["in"] = "sets"
+simpleIndex.preProc = {
+  keywords = function(queryPart)
+    queryPart.value = queryPart.value:lower()
+  end,
+  legalities = simpleIndex.preProc.keywords,
+  availabilities = simpleIndex.preProc.keywords,
+  sets = simpleIndex.preProc.keywords,
+}
 
 simpleIndex.operationTable = {
   keywords = {},

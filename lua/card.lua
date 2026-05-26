@@ -11,6 +11,9 @@ require 'Set'
 ---@field color_identity Set
 ---@field color_indicator Set?
 ---@field colors Set?
+---@field colorIdentityCount integer
+---@field colorIndicatorCount integer
+---@field colorsCount integer
 ---@field defense string?
 ---@field edhrec_rank integer?
 ---@field game_changer boolean?
@@ -49,6 +52,8 @@ require 'Set'
 ---@field cmc number?
 ---@field color_indicator Set?
 ---@field colors Set?
+---@field colorIndicatorCount integer
+---@field colorsCount integer
 ---@field defense string?
 ---@field layout string?
 ---@field loyalty string?

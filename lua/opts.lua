@@ -3,6 +3,7 @@
 ---@field defaultQuery string?
 ---@field sortPredicate string?
 ---@field cacheDir string?
+---@field instalDir string
 local opts = {}
 
 opts.bulkDataPath = vim.fn.stdpath("cache") .. "/oracle_cards.json"

@@ -18,6 +18,48 @@ loader.evaluatePT = function(value)
   end
 end
 
+loader.sortColors = function(colorString) -- Premature optimization stun locked me here.
+  local w, u, b, r, g, c = false, false, false, false, false, false
+
+  for char in colorString.chars() do
+    if char == "W" then
+      w = true
+    elseif char == "U" then
+      u = true
+    elseif char == "B" then
+      b = true
+    elseif char == "R" then
+      r = true
+    elseif char == "G" then
+      g = true
+    elseif char == "C" then
+      c = true
+    end
+  end
+
+  colorString = ""
+
+  if b then
+    colorString = "b"
+  end
+  if c then
+    colorString = colorString .. "c"
+  end
+  if g then
+    colorString = colorString .. "g"
+  end
+  if r then
+    colorString = colorString .. "r"
+  end
+  if u then
+    colorString = colorString .. "u"
+  end
+  if w then
+    colorString = colorString .. "w"
+  end
+end
+
+
 loader.chars = {}
 
 loader.addCharsToTable = function(str)
@@ -161,6 +203,8 @@ loader.processCards = function(rawJsonObj)
 
   local orderedList = {}
   for _, card in pairs(oracleObjects) do
+    loader.accumulateCharacters(card)
+
     card.nameSearch = card.name:lower():gsub("[%s,']+", "")
 
     if card.nameSearch:find("^([^,]+),") then
@@ -184,10 +228,13 @@ loader.processCards = function(rawJsonObj)
     table.insert(orderedList, card)
   end
 
-  local file = io.open(opts.cacheDir .. "/cardChars.json", "a")
+
+  local file = io.open(opts.cacheDir .. "/cardChars.json", "w+")
   if file then
     file:write(vim.json.encode(loader.chars))
+    file:close()
   end
+
 
   return orderedList
 end

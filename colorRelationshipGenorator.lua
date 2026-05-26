@@ -1,37 +1,37 @@
 local Set = require('Set')
 
 local colors = {
-  "B",
-  "G",
-  "R",
-  "U",
-  "W",
-  "BG",
-  "BR",
-  "BU",
-  "BW",
-  "GR",
-  "GU",
-  "GW",
-  "RU",
-  "RW",
-  "UW",
-  "BGR",
-  "BGU",
-  "BGW",
-  "BRU",
-  "BRW",
-  "BUW",
-  "GRU",
-  "GRW",
-  "GUW",
-  "RUW",
-  "BGRU",
-  "BGRW",
-  "BGUW",
-  "BRUW",
-  "GRUW",
-  "BGRUW",
+  "b",
+  "g",
+  "r",
+  "u",
+  "w",
+  "bg",
+  "br",
+  "bu",
+  "bw",
+  "gr",
+  "gu",
+  "gw",
+  "ru",
+  "rw",
+  "uw",
+  "bgr",
+  "bgu",
+  "bgw",
+  "bru",
+  "brw",
+  "buw",
+  "gru",
+  "grw",
+  "guw",
+  "ruw",
+  "bgru",
+  "bgrw",
+  "bguw",
+  "bruw",
+  "gruw",
+  "bgruw",
 }
 
 local colorRelationshipTable = {}
@@ -44,7 +44,7 @@ for _, queryColor in ipairs(colors) do
 
   for _, cardColor in ipairs(colors) do
     local cardColorTable = {}
-    cardColor:upper():gsub(".", function(c) table.insert(cardColorTable, c) end) --convert user string to table
+    cardColor:upper():gsub(".", function(c) table.insert(cardColorTable, c) end) --convert card string to table
     local cardColorSet = Set(cardColorTable)
 
     local symDiffCount = queryColorSet.symmetric_difference(cardColorSet).size
@@ -67,4 +67,5 @@ local file = io.open("colorRelationships.json", "a")
 
 if file then
   file:write(json)
+  file:close()
 end

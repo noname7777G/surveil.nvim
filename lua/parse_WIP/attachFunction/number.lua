@@ -13,17 +13,29 @@ number.alias = {
   defense = "evaluatedDefense",
 }
 
+number.preProc = {
+  cmc = function(queryPart)
+    local valueNumber = tonumber(queryPart.value)
+    if valueNumber then
+      queryPart.value = valueNumber
+    else
+      queryPart.value = nil
+    end
+  end,
+  evaluatedPower = number.preProc.cmc,
+  evaluatedToughness = number.preProc.cmc,
+  evaluatedLoyalty = number.preProc.cmc,
+  evaluatedDefense = number.preProc.cmc,
+}
+
 number.operationTranslation = {
   cmc = {},
-
   evaluatedPower = {},
   evaluatedToughness = {},
   evaluatedLoyalty = {},
   evaluatedDefense = {},
 }
-
 number.operationTranslation.cmc[":"] = "="
-
 number.operationTranslation.evaluatedPower[":"] = "="
 number.operationTranslation.evaluatedToughness[":"] = "="
 number.operationTranslation.evaluatedLoyalty[":"] = "="
